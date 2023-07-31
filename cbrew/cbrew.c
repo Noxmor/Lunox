@@ -6,7 +6,7 @@
 void create_lunox(void)
 {
     CbrewProject* lunox = CBREW_PRJ_NEW("Lunox", CBREW_PROJECT_TYPE_APP);
-    CBREW_PRJ_FILES(lunox, "Lunox/**.c");
+    CBREW_PRJ_FILES(lunox, "lunox/**.c");
     CBREW_PRJ_FLAG(lunox, "-Wall");
     CBREW_PRJ_FLAG(lunox, "-Wextra");
     CBREW_PRJ_FLAG(lunox, "-Wunreachable-code");
