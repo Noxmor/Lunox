@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 #define LNX_BIT(x) (1ull << (x))
-#define LNX_BIT_GET(x, bit) (((x) << (64 - 1 - (bit))) >> (64 - 1))
+#define LNX_BIT_GET(x, bit) (((x) << (sizeof(x) * 8 - 1 - (bit))) >> (sizeof(x) * 8 - 1))
 #define LNX_BIT_SET(x, bit) ((x) |= (bit))
 #define LNX_BIT_CLEAR(x, bit) ((x) &=  ~(bit))
 #define LNX_BIT_TOGGLE(x, bit) ((x) ^= (bit))
