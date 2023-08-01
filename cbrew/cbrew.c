@@ -15,11 +15,14 @@ void create_lunox_core(void)
 
     CbrewConfig* debug = CBREW_CFG_NEW(project, "Debug", "bin/Lunox-Core-Debug", "bin-int/Lunox-Core-Debug");
     CBREW_CFG_DEFINE(debug, "LNX_DEBUG");
+    CBREW_CFG_DEFINE(debug, "LNX_ENABLE_ASSERTS");
+    CBREW_CFG_DEFINE(debug, "LNX_ENABLE_VERIFY");
     CBREW_CFG_FLAG(debug, "-g");
     CBREW_CFG_FLAG(debug, "-O0");
 
     CbrewConfig* release = CBREW_CFG_NEW(project, "Release", "bin/Lunox-Core-Release", "bin-int/Lunox-Core-Release");
     CBREW_CFG_DEFINE(release, "LNX_RELEASE");
+    CBREW_CFG_DEFINE(release, "LNX_ENABLE_VERIFY");
     CBREW_CFG_FLAG(release, "-g");
     CBREW_CFG_FLAG(release, "-O2");
 
