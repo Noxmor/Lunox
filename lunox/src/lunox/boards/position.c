@@ -283,10 +283,10 @@ static char square_to_char(const Position* pos, Square square)
         return 'p';
         
     if(white->knights & square_bitboard)
-        return 'K';
+        return 'N';
 
     if(black->knights & square_bitboard)
-        return 'k';
+        return 'n';
 
     if(white->bishops & square_bitboard)
         return 'B';
