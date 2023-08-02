@@ -18,11 +18,22 @@ typedef struct Side
 
 void side_calculate_occupancy(Side* side);
 
+enum
+{
+    LNX_CASTLING_PERM_NONE = 0,
+    LNX_CASTLING_PERM_WHITE_KINGSIDE = LNX_BIT(0),
+    LNX_CASTLING_PERM_WHITE_QUEENSIDE = LNX_BIT(1),
+    LNX_CASTLING_PERM_BLACK_KINGSIDE = LNX_BIT(2),
+    LNX_CASTLING_PERM_BLACK_QUEENSIDE = LNX_BIT(3),
+};
+
 typedef struct Position
 {
     Side sides[2];
 
     Bitboard occupancy;
+
+    uint8_t castling_perms;
 
     uint8_t side_to_move;
 } Position;

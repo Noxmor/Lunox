@@ -22,6 +22,8 @@ void position_startpos(Position* pos)
 {
     pos->side_to_move = LNX_SIDE_WHITE;
     
+    pos->castling_perms = LNX_CASTLING_PERM_WHITE_KINGSIDE | LNX_CASTLING_PERM_WHITE_QUEENSIDE | LNX_CASTLING_PERM_BLACK_KINGSIDE | LNX_CASTLING_PERM_BLACK_QUEENSIDE;
+
     Side* white = &pos->sides[LNX_SIDE_WHITE];
     Side* black = &pos->sides[LNX_SIDE_BLACK];
 
@@ -71,6 +73,24 @@ void position_make_move(Position* pos, Move move)
     {
         case LNX_MOVE_TYPE_NORMAL:
         {
+            if(from == LNX_SQUARE_A1)
+                LNX_BIT_CLEAR(pos->castling_perms, LNX_CASTLING_PERM_WHITE_QUEENSIDE);
+
+            if(from == LNX_SQUARE_H1)
+                LNX_BIT_CLEAR(pos->castling_perms, LNX_CASTLING_PERM_WHITE_KINGSIDE);
+
+            if(from == LNX_SQUARE_E1)
+                LNX_BIT_CLEAR(pos->castling_perms, LNX_CASTLING_PERM_WHITE_KINGSIDE | LNX_CASTLING_PERM_WHITE_QUEENSIDE);
+
+            if(from == LNX_SQUARE_A8)
+                LNX_BIT_CLEAR(pos->castling_perms, LNX_CASTLING_PERM_WHITE_QUEENSIDE);
+
+            if(from == LNX_SQUARE_H8)
+                LNX_BIT_CLEAR(pos->castling_perms, LNX_CASTLING_PERM_WHITE_KINGSIDE);
+
+            if(from == LNX_SQUARE_E8)
+                LNX_BIT_CLEAR(pos->castling_perms, LNX_CASTLING_PERM_BLACK_KINGSIDE | LNX_CASTLING_PERM_BLACK_QUEENSIDE);
+
             white->pawns = white->pawns & from_bitboard ? ((white->pawns | to_bitboard) & ~from_bitboard) : white->pawns;
             white->knights = white->knights & from_bitboard ? ((white->knights | to_bitboard) & ~from_bitboard) : white->knights;
             white->bishops = white->bishops & from_bitboard ? ((white->bishops | to_bitboard) & ~from_bitboard) : white->bishops;
@@ -148,17 +168,30 @@ void position_make_move(Position* pos, Move move)
             white->kings = pos->side_to_move ? white->kings : ((white->kings & ~LNX_BIT(LNX_SQUARE_E1)) | to_bitboard);
             black->kings = pos->side_to_move ? ((black->kings & ~LNX_BIT(LNX_SQUARE_E8)) | to_bitboard) : black->kings;
 
-            LNX_VERIFY(LNX_SQUARE_TO_FILE(to) == LNX_FILE_G || LNX_SQUARE_TO_FILE(to) == LNX_FILE_C);
+            LNX_VERIFY((from == LNX_SQUARE_E1 && (to == LNX_SQUARE_C1 || to == LNX_SQUARE_G1)) || (from == LNX_SQUARE_E8 && (to == LNX_SQUARE_C8 || to == LNX_SQUARE_G8)));
 
             if(LNX_SQUARE_TO_FILE(to) == LNX_FILE_G)
             {
+                LNX_VERIFY(pos->castling_perms & (LNX_CASTLING_PERM_WHITE_KINGSIDE | LNX_CASTLING_PERM_BLACK_KINGSIDE));
                 white->rooks = pos->side_to_move ? white->rooks : ((white->rooks & ~LNX_BIT(LNX_SQUARE_H1)) | LNX_BIT(LNX_SQUARE_F1));
                 black->rooks = pos->side_to_move ? ((black->rooks & ~LNX_BIT(LNX_SQUARE_H8)) | LNX_BIT(LNX_SQUARE_F8)) : black->rooks;
             }
             else
             {
+                LNX_VERIFY(pos->castling_perms & (LNX_CASTLING_PERM_WHITE_QUEENSIDE | LNX_CASTLING_PERM_BLACK_QUEENSIDE));
                 white->rooks = pos->side_to_move ? white->rooks : ((white->rooks & ~LNX_BIT(LNX_SQUARE_A1)) | LNX_BIT(LNX_SQUARE_D1));
                 black->rooks = pos->side_to_move ? ((black->rooks & ~LNX_BIT(LNX_SQUARE_A8)) | LNX_BIT(LNX_SQUARE_D8)) : black->rooks;
+            }
+
+            if(pos->side_to_move == LNX_SIDE_WHITE)
+            {
+                LNX_VERIFY(pos->castling_perms & (LNX_CASTLING_PERM_WHITE_KINGSIDE | LNX_CASTLING_PERM_WHITE_QUEENSIDE));
+                LNX_BIT_CLEAR(pos->castling_perms, LNX_CASTLING_PERM_WHITE_KINGSIDE | LNX_CASTLING_PERM_WHITE_QUEENSIDE);
+            }
+            else
+            {
+                LNX_VERIFY(pos->castling_perms & (LNX_CASTLING_PERM_BLACK_KINGSIDE | LNX_CASTLING_PERM_BLACK_QUEENSIDE));
+                LNX_BIT_CLEAR(pos->castling_perms, LNX_CASTLING_PERM_BLACK_KINGSIDE | LNX_CASTLING_PERM_BLACK_QUEENSIDE);
             }
 
             break;
