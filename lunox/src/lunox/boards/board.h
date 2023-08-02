@@ -7,8 +7,8 @@
 #define LNX_BOARD_HEIGHT 8
 #define LNX_BOARD_SIZE (LNX_BOARD_WIDTH * LNX_BOARD_HEIGHT)
 
-#define LNX_SQUARE_TO_FILE(square) ((square) / LNX_BOARD_WIDTH)
-#define LNX_SQUARE_TO_RANK(square) ((square) % LNX_BOARD_WIDTH)
+#define LNX_SQUARE_TO_FILE(square) ((square) % LNX_BOARD_WIDTH)
+#define LNX_SQUARE_TO_RANK(square) ((square) / LNX_BOARD_WIDTH)
 #define LNX_FILE_RANK_TO_SQUARE(file, rank) (LNX_BOARD_WIDTH * (rank) + (file))
 
 enum
