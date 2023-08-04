@@ -35,6 +35,8 @@ typedef struct Position
 
     uint8_t castling_perms;
 
+    uint8_t plys;
+
     uint8_t side_to_move;
 } Position;
 

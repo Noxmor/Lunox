@@ -20,10 +20,6 @@ void position_parse_fen(Position* pos, const char* fen)
 
 void position_startpos(Position* pos)
 {
-    pos->side_to_move = LNX_SIDE_WHITE;
-    
-    pos->castling_perms = LNX_CASTLING_PERM_WHITE_KINGSIDE | LNX_CASTLING_PERM_WHITE_QUEENSIDE | LNX_CASTLING_PERM_BLACK_KINGSIDE | LNX_CASTLING_PERM_BLACK_QUEENSIDE;
-
     Side* white = &pos->sides[LNX_SIDE_WHITE];
     Side* black = &pos->sides[LNX_SIDE_BLACK];
 
@@ -45,6 +41,12 @@ void position_startpos(Position* pos)
     side_calculate_occupancy(black);
 
     position_calculate_occupancy(pos);
+    
+    pos->castling_perms = LNX_CASTLING_PERM_WHITE_KINGSIDE | LNX_CASTLING_PERM_WHITE_QUEENSIDE | LNX_CASTLING_PERM_BLACK_KINGSIDE | LNX_CASTLING_PERM_BLACK_QUEENSIDE;
+
+    pos->plys = 0;
+
+    pos->side_to_move = LNX_SIDE_WHITE;
 }
 
 void position_calculate_occupancy(Position* pos)
@@ -204,6 +206,8 @@ void position_make_move(Position* pos, Move move)
     side_calculate_occupancy(black);
 
     position_calculate_occupancy(pos);
+
+    ++pos->plys;
 
     pos->side_to_move = !pos->side_to_move;
 
