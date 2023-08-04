@@ -16,6 +16,8 @@ uint8_t lsb_index(uint64_t x);
 #define LNX_BIT_LSB_INDEX(x) lsb_index(x)
 #endif
 
+#define LNX_BIT_LSB_RESET(x) (x &= (x) - 1)
+
 #if defined(__clang__) || defined(__GNUC__)
 #define LNX_BIT_COUNT(x) __builtin_popcountll(x)
 #else
