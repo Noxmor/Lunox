@@ -9,6 +9,13 @@
 #define LNX_BIT_CLEAR(x, bit) ((x) &=  ~(bit))
 #define LNX_BIT_TOGGLE(x, bit) ((x) ^= (bit))
 
+#ifdef __GNUC__
+#define LNX_BIT_LSB_INDEX(x) __builtin_ctzll(x)
+#else
+uint8_t lsb_index(uint64_t x);
+#define LNX_BIT_LSB_INDEX(x) lsb_index(x)
+#endif
+
 #if defined(__clang__) || defined(__GNUC__)
 #define LNX_BIT_COUNT(x) __builtin_popcountll(x)
 #else
