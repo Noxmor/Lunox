@@ -44,4 +44,9 @@ typedef uint16_t Move;
 #define LNX_MOVE_SET_PROMOTION_PIECE(move, promotion_piece) ((move) |= ((promotion_piece) << 12))
 #define LNX_MOVE_SET_TYPE(move, type) ((move) |= ((type) << 14))
 
+#define LNX_MOVE_CLEAR_FROM(move) ((move) &= ~0b111111)
+#define LNX_MOVE_CLEAR_TO(move) ((move) &= ~0b111111000000)
+#define LNX_MOVE_CLEAR_PROMOTION_PIECE(move) ((move) &= ~0b11000000000000)
+#define LNX_MOVE_CLEAR_TYPE(move) ((move) &= ~0b1100000000000000)
+
 #endif
