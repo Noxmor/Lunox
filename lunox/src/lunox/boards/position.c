@@ -103,19 +103,19 @@ void position_make_move(Position* pos, Move move)
             if(black->pawns & from_bitboard && to_bitboard == from_bitboard >> 2 * LNX_BOARD_WIDTH)
                 pos->ep_square = from - LNX_BOARD_WIDTH;
 
-            white->pawns = white->pawns & from_bitboard ? ((white->pawns | to_bitboard) & ~from_bitboard) : white->pawns;
-            white->knights = white->knights & from_bitboard ? ((white->knights | to_bitboard) & ~from_bitboard) : white->knights;
-            white->bishops = white->bishops & from_bitboard ? ((white->bishops | to_bitboard) & ~from_bitboard) : white->bishops;
-            white->rooks = white->rooks & from_bitboard ? ((white->rooks | to_bitboard) & ~from_bitboard) : white->rooks;
-            white->queens = white->queens & from_bitboard ? ((white->queens | to_bitboard) & ~from_bitboard) : white->queens;
-            white->kings = white->kings & from_bitboard ? ((white->kings | to_bitboard) & ~from_bitboard) : white->kings;
+            white->pawns = white->pawns & from_bitboard ? ((white->pawns | to_bitboard) & ~from_bitboard) : white->pawns & ~to_bitboard;
+            white->knights = white->knights & from_bitboard ? ((white->knights | to_bitboard) & ~from_bitboard) : white->knights & ~to_bitboard;
+            white->bishops = white->bishops & from_bitboard ? ((white->bishops | to_bitboard) & ~from_bitboard) : white->bishops & ~to_bitboard;
+            white->rooks = white->rooks & from_bitboard ? ((white->rooks | to_bitboard) & ~from_bitboard) : white->rooks & ~to_bitboard;
+            white->queens = white->queens & from_bitboard ? ((white->queens | to_bitboard) & ~from_bitboard) : white->queens & ~to_bitboard;
+            white->kings = white->kings & from_bitboard ? ((white->kings | to_bitboard) & ~from_bitboard) : white->kings & ~to_bitboard;
 
-            black->pawns = black->pawns & from_bitboard ? ((black->pawns | to_bitboard) & ~from_bitboard) : black->pawns;
-            black->knights = black->knights & from_bitboard ? ((black->knights | to_bitboard) & ~from_bitboard) : black->knights;
-            black->bishops = black->bishops & from_bitboard ? ((black->bishops | to_bitboard) & ~from_bitboard) : black->bishops;
-            black->rooks = black->rooks & from_bitboard ? ((black->rooks | to_bitboard) & ~from_bitboard) : black->rooks;
-            black->queens = black->queens & from_bitboard ? ((black->queens | to_bitboard) & ~from_bitboard) : black->queens;
-            black->kings = black->kings & from_bitboard ? ((black->kings | to_bitboard) & ~from_bitboard) : black->kings;
+            black->pawns = black->pawns & from_bitboard ? ((black->pawns | to_bitboard) & ~from_bitboard) : black->pawns & ~to_bitboard;
+            black->knights = black->knights & from_bitboard ? ((black->knights | to_bitboard) & ~from_bitboard) : black->knights & ~to_bitboard;
+            black->bishops = black->bishops & from_bitboard ? ((black->bishops | to_bitboard) & ~from_bitboard) : black->bishops & ~to_bitboard;
+            black->rooks = black->rooks & from_bitboard ? ((black->rooks | to_bitboard) & ~from_bitboard) : black->rooks & ~to_bitboard;
+            black->queens = black->queens & from_bitboard ? ((black->queens | to_bitboard) & ~from_bitboard) : black->queens & ~to_bitboard;
+            black->kings = black->kings & from_bitboard ? ((black->kings | to_bitboard) & ~from_bitboard) : black->kings & ~to_bitboard;
 
             break;
         }
