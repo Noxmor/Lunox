@@ -44,6 +44,8 @@ void position_startpos(Position* pos)
     
     pos->castling_perms = LNX_CASTLING_PERM_WHITE_KINGSIDE | LNX_CASTLING_PERM_WHITE_QUEENSIDE | LNX_CASTLING_PERM_BLACK_KINGSIDE | LNX_CASTLING_PERM_BLACK_QUEENSIDE;
 
+    pos->ep_square = LNX_SQUARE_OFFBOARD;
+
     pos->plys = 0;
 
     pos->side_to_move = LNX_SIDE_WHITE;
@@ -61,6 +63,8 @@ void position_make_move(Position* pos, Move move)
     LNX_ASSERT(pos != NULL);
     
     LNX_VERIFY(position_validate(pos));
+
+    pos->ep_square = LNX_SQUARE_OFFBOARD;
 
     Side* white = &pos->sides[LNX_SIDE_WHITE];
     Side* black = &pos->sides[LNX_SIDE_BLACK];
@@ -92,6 +96,12 @@ void position_make_move(Position* pos, Move move)
 
             if(from == LNX_SQUARE_E8)
                 LNX_BIT_CLEAR(pos->castling_perms, LNX_CASTLING_PERM_BLACK_KINGSIDE | LNX_CASTLING_PERM_BLACK_QUEENSIDE);
+
+            if(white->pawns & from_bitboard && to_bitboard == from_bitboard << 2 * LNX_BOARD_WIDTH)
+                pos->ep_square = from + LNX_BOARD_WIDTH;
+                
+            if(black->pawns & from_bitboard && to_bitboard == from_bitboard >> 2 * LNX_BOARD_WIDTH)
+                pos->ep_square = from - LNX_BOARD_WIDTH;
 
             white->pawns = white->pawns & from_bitboard ? ((white->pawns | to_bitboard) & ~from_bitboard) : white->pawns;
             white->knights = white->knights & from_bitboard ? ((white->knights | to_bitboard) & ~from_bitboard) : white->knights;
@@ -217,6 +227,9 @@ void position_make_move(Position* pos, Move move)
 LunoxBool position_validate(const Position* pos)
 {
     LNX_ASSERT(pos != NULL);
+
+    if(pos->ep_square > LNX_SQUARE_OFFBOARD)
+        return LNX_FALSE;
 
     if(pos->side_to_move != LNX_SIDE_WHITE && pos->side_to_move != LNX_SIDE_BLACK)
         return LNX_FALSE;
