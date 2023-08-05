@@ -9,7 +9,7 @@ Bitboard king_attacks[LNX_BOARD_WIDTH * LNX_BOARD_HEIGHT];
 
 static void init_white_pawn_attack_bitboard(Square square)
 {
-    Bitboard pawn_bitboard = BIT(square);
+    Bitboard pawn_bitboard = LNX_BIT(square);
     white_pawn_attacks[square] = LNX_BITBOARD_EMPTY;
 
     white_pawn_attacks[square] |= (pawn_bitboard << (LNX_BOARD_HEIGHT - 1)) & ~LNX_BITBOARD_FILE_H;
@@ -18,7 +18,7 @@ static void init_white_pawn_attack_bitboard(Square square)
 
 static void init_black_pawn_attack_bitboard(Square square)
 {
-    Bitboard pawn_bitboard = BIT(square);
+    Bitboard pawn_bitboard = LNX_BIT(square);
     black_pawn_attacks[square] = LNX_BITBOARD_EMPTY;
 
     black_pawn_attacks[square] |= (pawn_bitboard >> (LNX_BOARD_HEIGHT + 1)) & LNX_BITBOARD_NOT_FILE_H;
@@ -27,7 +27,7 @@ static void init_black_pawn_attack_bitboard(Square square)
 
 static void init_knight_attack_bitboard(Square square)
 {
-    Bitboard knight_bitboard = BIT(square);
+    Bitboard knight_bitboard = LNX_BIT(square);
     knight_attacks[square] = LNX_BITBOARD_EMPTY;
 
     knight_attacks[square] |= ((knight_bitboard >> 2) << LNX_BOARD_HEIGHT) & ~(LNX_BITBOARD_NOT_FILE_H ^ LNX_BITBOARD_NOT_FILE_G);
@@ -45,7 +45,7 @@ static void init_knight_attack_bitboard(Square square)
 
 static void init_king_attack_bitboard(Square square)
 {
-    Bitboard king_bitboard = BIT(square);
+    Bitboard king_bitboard = LNX_BIT(square);
     king_attacks[square] = LNX_BITBOARD_EMPTY;
 
     king_attacks[square] |= (king_bitboard << (LNX_BOARD_HEIGHT - 1)) & LNX_BITBOARD_NOT_FILE_H;
