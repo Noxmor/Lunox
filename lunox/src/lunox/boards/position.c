@@ -79,23 +79,17 @@ void position_make_move(Position* pos, Move move)
     {
         case LNX_MOVE_TYPE_NORMAL:
         {
-            if(from == LNX_SQUARE_A1)
-                LNX_BIT_CLEAR(pos->castling_perms, LNX_CASTLING_PERM_WHITE_QUEENSIDE);
+            switch(from)
+            {
+                case LNX_SQUARE_A1: LNX_BIT_CLEAR(pos->castling_perms, LNX_CASTLING_PERM_WHITE_QUEENSIDE); break;
+                case LNX_SQUARE_E1: LNX_BIT_CLEAR(pos->castling_perms, LNX_CASTLING_PERM_WHITE_KINGSIDE | LNX_CASTLING_PERM_WHITE_QUEENSIDE); break;
+                case LNX_SQUARE_H1: LNX_BIT_CLEAR(pos->castling_perms, LNX_CASTLING_PERM_WHITE_KINGSIDE); break;
+                case LNX_SQUARE_A8: LNX_BIT_CLEAR(pos->castling_perms, LNX_CASTLING_PERM_WHITE_QUEENSIDE); break;
+                case LNX_SQUARE_E8: LNX_BIT_CLEAR(pos->castling_perms, LNX_CASTLING_PERM_BLACK_KINGSIDE | LNX_CASTLING_PERM_BLACK_QUEENSIDE); break;
+                case LNX_SQUARE_H8: LNX_BIT_CLEAR(pos->castling_perms, LNX_CASTLING_PERM_WHITE_KINGSIDE); break;
 
-            if(from == LNX_SQUARE_H1)
-                LNX_BIT_CLEAR(pos->castling_perms, LNX_CASTLING_PERM_WHITE_KINGSIDE);
-
-            if(from == LNX_SQUARE_E1)
-                LNX_BIT_CLEAR(pos->castling_perms, LNX_CASTLING_PERM_WHITE_KINGSIDE | LNX_CASTLING_PERM_WHITE_QUEENSIDE);
-
-            if(from == LNX_SQUARE_A8)
-                LNX_BIT_CLEAR(pos->castling_perms, LNX_CASTLING_PERM_WHITE_QUEENSIDE);
-
-            if(from == LNX_SQUARE_H8)
-                LNX_BIT_CLEAR(pos->castling_perms, LNX_CASTLING_PERM_WHITE_KINGSIDE);
-
-            if(from == LNX_SQUARE_E8)
-                LNX_BIT_CLEAR(pos->castling_perms, LNX_CASTLING_PERM_BLACK_KINGSIDE | LNX_CASTLING_PERM_BLACK_QUEENSIDE);
+                default: break;
+            }
 
             if(white->pawns & from_bitboard && to_bitboard == from_bitboard << 2 * LNX_BOARD_WIDTH)
                 pos->ep_square = from + LNX_BOARD_WIDTH;
