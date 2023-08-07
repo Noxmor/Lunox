@@ -335,11 +335,30 @@ static LunoxBool init_rook_attack_board(Square square)
     return success;
 }
 
-static LunoxBool init_magic_numbers(const char* filepath)
+void bitboard_init()
 {
-    LNX_ASSERT(filepath != NULL);
+    for(Square square = LNX_SQUARE_A1; square <= LNX_SQUARE_H8; ++square)
+    {
+        init_white_pawn_push_bitboard(square);
+        init_black_pawn_push_bitboard(square);
+        init_white_pawn_attack_bitboard(square);
+        init_black_pawn_attack_bitboard(square);
+        init_knight_attack_bitboard(square);
+        init_king_attack_bitboard(square);
 
-    FILE* f = fopen(filepath, "rb");
+        init_bishop_blocker_mask(square);
+        init_bishop_blocker_shift(square);
+
+        init_rook_blocker_mask(square);
+        init_rook_blocker_shift(square);
+    }
+}
+
+LunoxBool bitboard_init_magics(const char* magics_filepath)
+{
+    LNX_ASSERT(magics_filepath != NULL);
+
+    FILE* f = fopen(magics_filepath, "rb");
 
     if(f == NULL)
         return LNX_FALSE;
@@ -370,27 +389,9 @@ static LunoxBool init_magic_numbers(const char* filepath)
     return LNX_TRUE;
 }
 
-LunoxBool bitboard_init(const char* magics_filepath)
+void bitboard_init_default_magics(void)
 {
-    LNX_ASSERT(magics_filepath != NULL);
-
-    for(Square square = LNX_SQUARE_A1; square <= LNX_SQUARE_H8; ++square)
-    {
-        init_white_pawn_push_bitboard(square);
-        init_black_pawn_push_bitboard(square);
-        init_white_pawn_attack_bitboard(square);
-        init_black_pawn_attack_bitboard(square);
-        init_knight_attack_bitboard(square);
-        init_king_attack_bitboard(square);
-
-        init_bishop_blocker_mask(square);
-        init_bishop_blocker_shift(square);
-
-        init_rook_blocker_mask(square);
-        init_rook_blocker_shift(square);
-    }
-
-    return init_magic_numbers(magics_filepath);
+    //TODO: Implement
 }
 
 Bitboard bitboard_get_bishop_attacks(Square bishop, Bitboard occupancy)
