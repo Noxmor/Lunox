@@ -56,7 +56,13 @@ extern Bitboard black_pawn_attacks[LNX_BOARD_WIDTH * LNX_BOARD_HEIGHT];
 extern Bitboard knight_attacks[LNX_BOARD_WIDTH * LNX_BOARD_HEIGHT];
 extern Bitboard king_attacks[LNX_BOARD_WIDTH * LNX_BOARD_HEIGHT];
 
-void bitboard_init(void);
+void bitboard_init(const char* magics_filepath);
+
+Bitboard bitboard_get_bishop_attacks(Square bishop, Bitboard occupancy);
+
+Bitboard bitboard_get_rook_attacks(Square rook, Bitboard occupancy);
+
+Bitboard bitboard_get_queen_attacks(Square queen, Bitboard occupancy);
 
 void bitboard_print(Bitboard bitboard, uint8_t side);
 

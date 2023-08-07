@@ -12,6 +12,15 @@ Bitboard king_attacks[LNX_BOARD_WIDTH * LNX_BOARD_HEIGHT];
 Bitboard bishop_blocker_masks[LNX_BOARD_WIDTH * LNX_BOARD_HEIGHT];
 Bitboard rook_blocker_masks[LNX_BOARD_WIDTH * LNX_BOARD_HEIGHT];
 
+Bitboard bishop_blocker_shifts[LNX_BOARD_WIDTH * LNX_BOARD_HEIGHT];
+Bitboard rook_blocker_shifts[LNX_BOARD_WIDTH * LNX_BOARD_HEIGHT];
+
+Bitboard* bishop_attacks[LNX_BOARD_WIDTH * LNX_BOARD_HEIGHT];
+Bitboard* rook_attacks[LNX_BOARD_WIDTH * LNX_BOARD_HEIGHT];
+
+uint64_t bishop_magics[LNX_BOARD_WIDTH * LNX_BOARD_HEIGHT];
+uint64_t rook_magics[LNX_BOARD_WIDTH * LNX_BOARD_HEIGHT];
+
 static void init_white_pawn_push_bitboard(Square square)
 {
     Bitboard pawn_bitboard = LNX_BIT(square);
@@ -118,6 +127,11 @@ static void init_bishop_blocker_mask(Square square)
     bishop_blocker_masks[square] &= ~bishop_bitboard;
 }
 
+static void init_bishop_blocker_shift(Square square)
+{
+    bishop_blocker_shifts[square] = LNX_BOARD_SIZE - LNX_BIT_COUNT(bishop_blocker_masks[square]);
+}
+
 static void init_rook_blocker_mask(Square square)
 {
     Bitboard rook_bitboard = BIT(square);
@@ -137,8 +151,20 @@ static void init_rook_blocker_mask(Square square)
     rook_blocker_masks[square] &= ~rook_bitboard;
 }
 
-void bitboard_init(void)
+static void init_rook_blocker_shift(Square square)
 {
+    rook_blocker_shifts[square] = LNX_BOARD_SIZE - LNX_BIT_COUNT(rook_blocker_masks[square]);
+}
+
+static void init_magic_numbers(const char* filepath)
+{
+    //TODO: Implement
+}
+
+void bitboard_init(const char* magics_filepath)
+{
+    init_magic_numbers(magics_filepath);
+
     for(Square square = LNX_SQUARE_A1; square <= LNX_SQUARE_H8; ++square)
     {
         init_white_pawn_push_bitboard(square);
@@ -149,8 +175,30 @@ void bitboard_init(void)
         init_king_attack_bitboard(square);
 
         init_bishop_blocker_mask(square);
+        init_bishop_blocker_shift(square);
+
         init_rook_blocker_mask(square);
+        init_rook_blocker_shift(square);
     }
+}
+
+Bitboard bitboard_get_bishop_attacks(Square bishop, Bitboard occupancy)
+{
+    occupancy &= bishop_blocker_masks[bishop];
+    uint64_t magic_index = (occupancy * bishop_magics[bishop]) >> bishop_blocker_shifts[bishop];
+    return bishop_attacks[bishop][magic_index];
+}
+
+Bitboard bitboard_get_rook_attacks(Square rook, Bitboard occupancy)
+{
+    occupancy &= rook_blocker_masks[rook];
+    uint64_t magic_index = (occupancy * rook_magics[rook]) >> rook_blocker_shifts[rook];
+    return rook_attacks[rook][magic_index];
+}
+
+Bitboard bitboard_get_queen_attacks(Square queen, Bitboard occupancy)
+{
+    return bitboard_get_bishop_attacks(queen, occupancy) | bitboard_get_rook_attacks(queen, occupancy);
 }
 
 static void bitboard_print_white(Bitboard bitboard)
