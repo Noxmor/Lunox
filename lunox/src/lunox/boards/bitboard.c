@@ -337,6 +337,8 @@ static LunoxBool init_rook_attack_board(Square square)
 
 static LunoxBool init_magic_numbers(const char* filepath)
 {
+    LNX_ASSERT(filepath != NULL);
+
     FILE* f = fopen(filepath, "rb");
 
     if(f == NULL)
@@ -370,6 +372,8 @@ static LunoxBool init_magic_numbers(const char* filepath)
 
 LunoxBool bitboard_init(const char* magics_filepath)
 {
+    LNX_ASSERT(magics_filepath != NULL);
+
     for(Square square = LNX_SQUARE_A1; square <= LNX_SQUARE_H8; ++square)
     {
         init_white_pawn_push_bitboard(square);
