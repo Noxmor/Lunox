@@ -156,15 +156,54 @@ static void init_rook_blocker_shift(Square square)
     rook_blocker_shifts[square] = LNX_BOARD_SIZE - LNX_BIT_COUNT(rook_blocker_masks[square]);
 }
 
-static void init_magic_numbers(const char* filepath)
+static LunoxBool init_magic_numbers(const char* filepath)
 {
-    //TODO: Implement
+    FILE* f = fopen(filepath, "rb");
+
+    if(f == NULL)
+        return LNX_FALSE;
+
+    if(fread(bishop_magics, sizeof(bishop_magics), 1, f) != 1)
+    {
+        fclose(f);
+        return LNX_FALSE;
+    }
+
+    if(fread(rook_magics, sizeof(rook_magics), 1, f) != 1)
+    {
+        fclose(f);
+        return LNX_FALSE;
+    }
+
+    for(Square square = LNX_SQUARE_A1; square <= LNX_SQUARE_H8; ++square)
+    {
+        uint64_t bishop_permutations = 1ull << LNX_BIT_COUNT(rook_blocker_masks[square]);
+        bishop_attacks[square] = malloc(bishop_permutations * sizeof(Bitboard));
+
+        if(fread(&bishop_attacks[square], sizeof(Bitboard), bishop_permutations, f) != bishop_permutations)
+        {
+            fclose(f);
+            return LNX_FALSE;
+        }
+    }
+
+    for(Square square = LNX_SQUARE_A1; square <= LNX_SQUARE_H8; ++square)
+    {
+        uint64_t rook_permutations = 1ull << LNX_BIT_COUNT(rook_blocker_masks[square]);
+        rook_attacks[square] = malloc(rook_permutations * sizeof(Bitboard));
+
+        if(fread(&rook_attacks[square], sizeof(Bitboard), rook_permutations, f) != rook_permutations)
+        {
+            fclose(f);
+            return LNX_FALSE;
+        }
+    }
+
+    fclose(f);
 }
 
-void bitboard_init(const char* magics_filepath)
+LunoxBool bitboard_init(const char* magics_filepath)
 {
-    init_magic_numbers(magics_filepath);
-
     for(Square square = LNX_SQUARE_A1; square <= LNX_SQUARE_H8; ++square)
     {
         init_white_pawn_push_bitboard(square);
@@ -180,6 +219,8 @@ void bitboard_init(const char* magics_filepath)
         init_rook_blocker_mask(square);
         init_rook_blocker_shift(square);
     }
+
+    return init_magic_numbers(magics_filepath);
 }
 
 Bitboard bitboard_get_bishop_attacks(Square bishop, Bitboard occupancy)
