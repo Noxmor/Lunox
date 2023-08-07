@@ -201,6 +201,8 @@ static LunoxBool init_magic_numbers(const char* filepath)
     }
 
     fclose(f);
+
+    return LNX_TRUE;
 }
 
 LunoxBool bitboard_init(const char* magics_filepath)
