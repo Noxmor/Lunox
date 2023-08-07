@@ -1,6 +1,7 @@
 #include "bitboard.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 
 Bitboard white_pawn_pushs[LNX_BOARD_WIDTH * LNX_BOARD_HEIGHT];
 Bitboard black_pawn_pushs[LNX_BOARD_WIDTH * LNX_BOARD_HEIGHT];
