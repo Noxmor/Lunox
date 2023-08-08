@@ -391,7 +391,148 @@ LunoxBool bitboard_init_magics(const char* magics_filepath)
 
 void bitboard_init_default_magics(void)
 {
-    //TODO: Implement
+    bishop_magics[0] = 4757015075934634504;
+    bishop_magics[1] = 1154119036817506310;
+    bishop_magics[2] = 220765450784473096;
+    bishop_magics[3] = 1155178256517826560;
+    bishop_magics[4] = 4919061787128627200;
+    bishop_magics[5] = 4620996692557168964;
+    bishop_magics[6] = 117657708630638884;
+    bishop_magics[7] = 2882588536371022080;
+    bishop_magics[8] = 2341943308882018369;
+    bishop_magics[9] = 1137745560928512;
+    bishop_magics[10] = 15436448071680;
+    bishop_magics[11] = 1152926057364520995;
+    bishop_magics[12] = 1165319615471947776;
+    bishop_magics[13] = 1153207657340878853;
+    bishop_magics[14] = 36663249604976640;
+    bishop_magics[15] = 73189146323322028;
+    bishop_magics[16] = 76579353324049428;
+    bishop_magics[17] = 577041603953230352;
+    bishop_magics[18] = 163264317347729424;
+    bishop_magics[19] = 1132531371090177;
+    bishop_magics[20] = 562967159767560;
+    bishop_magics[21] = 41095522845458977;
+    bishop_magics[22] = 146929976827970560;
+    bishop_magics[23] = 9571249798007808;
+    bishop_magics[24] = 2260601275815954;
+    bishop_magics[25] = 9329356833817616;
+    bishop_magics[26] = 6965380873864631298;
+    bishop_magics[27] = 4638716412838297736;
+    bishop_magics[28] = 49542894442252296;
+    bishop_magics[29] = 72567784538376;
+    bishop_magics[30] = 651335467480384000;
+    bishop_magics[31] = 1154083688399571232;
+    bishop_magics[32] = 2256276260397056;
+    bishop_magics[33] = 288529516371378432;
+    bishop_magics[34] = 2345250657073643584;
+    bishop_magics[35] = 288794426691289408;
+    bishop_magics[36] = 1143767244210432;
+    bishop_magics[37] = 2324420950449258688;
+    bishop_magics[38] = 2342436956322007040;
+    bishop_magics[39] = 1163110713774966913;
+    bishop_magics[40] = 721158708385701888;
+    bishop_magics[41] = 950369695943368704;
+    bishop_magics[42] = 5188159983191066629;
+    bishop_magics[43] = 1208660151931241472;
+    bishop_magics[44] = 2823550222467136;
+    bishop_magics[45] = 7881883484422660;
+    bishop_magics[46] = 4613955702506127488;
+    bishop_magics[47] = 38282831293661696;
+    bishop_magics[48] = 289361792139132928;
+    bishop_magics[49] = 432664456993439752;
+    bishop_magics[50] = 4620713326855586946;
+    bishop_magics[51] = 2322169103646720;
+    bishop_magics[52] = 288230444904873984;
+    bishop_magics[53] = 576531576448499712;
+    bishop_magics[54] = 6935547966233120771;
+    bishop_magics[55] = 1127008044187788;
+    bishop_magics[56] = 4613377213928316928;
+    bishop_magics[57] = 288244674124071950;
+    bishop_magics[58] = 18031999386190848;
+    bishop_magics[59] = 6631463715328;
+    bishop_magics[60] = 5332543984898277890;
+    bishop_magics[61] = 2342172660168983040;
+    bishop_magics[62] = 2357636666295040;
+    bishop_magics[63] = 289391769820397713;
+    
+    rook_magics[0] = 108086665936902016;
+    rook_magics[1] = 18014467231056192;
+    rook_magics[2] = 72076287346229256;
+    rook_magics[3] = 7061664007467583552;
+    rook_magics[4] = 144132891933417480;
+    rook_magics[5] = 1224984596247216200;
+    rook_magics[6] = 4863888697080168960;
+    rook_magics[7] = 36029346827223296;
+    rook_magics[8] = 2379308125313302784;
+    rook_magics[9] = 864972741944610944;
+    rook_magics[10] = 36310479764783680;
+    rook_magics[11] = 2882866788786258184;
+    rook_magics[12] = 2306687503081539584;
+    rook_magics[13] = 9288691411454208;
+    rook_magics[14] = 181269893860361224;
+    rook_magics[15] = 306807729203449922;
+    rook_magics[16] = 1459169028051312770;
+    rook_magics[17] = 292734250996752384;
+    rook_magics[18] = 4614220393136398336;
+    rook_magics[19] = 144397762709164032;
+    rook_magics[20] = 149747436590989440;
+    rook_magics[21] = 1297319267481681928;
+    rook_magics[22] = 117097988626727320;
+    rook_magics[23] = 597010624714711172;
+    rook_magics[24] = 36046665156665346;
+    rook_magics[25] = 40532672597991429;
+    rook_magics[26] = 180179173763334400;
+    rook_magics[27] = 2353167093480304640;
+    rook_magics[28] = 589127199270371604;
+    rook_magics[29] = 360850945914179656;
+    rook_magics[30] = 2305851822487634433;
+    rook_magics[31] = 4765130038678932481;
+    rook_magics[32] = 144153396448854144;
+    rook_magics[33] = 105621839937604;
+    rook_magics[34] = 1233987191294664832;
+    rook_magics[35] = 734192361113913600;
+    rook_magics[36] = 41782012284934;
+    rook_magics[37] = 1152956843732045888;
+    rook_magics[38] = 3659191960995328;
+    rook_magics[39] = 72339361642842241;
+    rook_magics[40] = 900722261948907521;
+    rook_magics[41] = 2598579321459195904;
+    rook_magics[42] = 261218674583601168;
+    rook_magics[43] = 4652219514797228048;
+    rook_magics[44] = 282059092590672;
+    rook_magics[45] = 562967267639440;
+    rook_magics[46] = 18665343770427394;
+    rook_magics[47] = 1378119920520396801;
+    rook_magics[48] = 577094106040238208;
+    rook_magics[49] = 36310555924898304;
+    rook_magics[50] = 2454534437738645248;
+    rook_magics[51] = 81073727931961856;
+    rook_magics[52] = 7068400714737780992;
+    rook_magics[53] = 2389722591196878336;
+    rook_magics[54] = 4683744780738890752;
+    rook_magics[55] = 306245341601268224;
+    rook_magics[56] = 4629771340269881602;
+    rook_magics[57] = 6935543563996430465;
+    rook_magics[58] = 1152940196841406473;
+    rook_magics[59] = 13229037191425;
+    rook_magics[60] = 563018815774722;
+    rook_magics[61] = 844596762640403;
+    rook_magics[62] = 1152926457510627332;
+    rook_magics[63] = 9025117866754658;
+
+    for(Square square = LNX_SQUARE_A1; square <= LNX_SQUARE_H8; ++square)
+    {
+        if(!init_bishop_attack_board(square))
+        {
+            LNX_VERIFY(LNX_FALSE);
+        }
+
+        if(!init_rook_attack_board(square))
+        {
+            LNX_VERIFY(LNX_FALSE);
+        }
+    }
 }
 
 Bitboard bitboard_get_bishop_attacks(Square bishop, Bitboard occupancy)
