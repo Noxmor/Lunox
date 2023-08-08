@@ -293,6 +293,12 @@ LunoxBool position_validate(const Position* pos)
     if(black->queens & black->kings)
         return LNX_FALSE;
 
+    const Side* enemy = &pos->sides[!pos->side_to_move];
+
+    LNX_VERIFY(enemy->kings != LNX_BITBOARD_EMPTY);
+    if(position_attack_count_on_square(pos, pos->side_to_move, LNX_BIT_LSB_INDEX(enemy->kings)) != 0)
+        return LNX_FALSE;
+
     return LNX_TRUE;
 }
 
