@@ -50,7 +50,7 @@ void position_calculate_occupancy(Position* pos);
 
 void position_make_move(Position* pos, Move move);
 
-uint8_t position_enemy_attack_count_on_square(const Position* pos, Square square);
+uint8_t position_attack_count_on_square(const Position* pos, uint8_t side, Square square);
 
 LunoxBool position_validate(const Position* pos);
 
