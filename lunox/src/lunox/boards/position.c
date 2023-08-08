@@ -228,7 +228,7 @@ uint8_t position_enemy_attack_count_on_square(const Position* pos, Square square
 
     const Side* enemy = &pos->sides[!pos->side_to_move];
 
-    attackers |= !pos->side_to_move == LNX_SIDE_WHITE ? (white_pawn_attacks[square] & enemy->pawns) : (black_pawn_attacks[square] & enemy->pawns);
+    attackers |= (pos->side_to_move == LNX_SIDE_WHITE ? white_pawn_attacks[square] : black_pawn_attacks[square]) & enemy->pawns;
     attackers |= knight_attacks[square] & enemy->knights;
     attackers |= king_attacks[square] & enemy->kings;
     attackers |= bitboard_get_bishop_attacks(square, pos->occupancy) & enemy->bishops;
