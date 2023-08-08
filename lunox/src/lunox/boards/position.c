@@ -218,6 +218,26 @@ void position_make_move(Position* pos, Move move)
     LNX_VERIFY(position_validate(pos));
 }
 
+uint8_t position_enemy_attack_count_on_square(const Position* pos, Square square)
+{
+    LNX_ASSERT(pos != NULL);
+
+    LNX_VERIFY(square < LNX_SQUARE_OFFBOARD);
+
+    Bitboard attackers = LNX_BITBOARD_EMPTY;
+
+    const Side* enemy = &pos->sides[!pos->side_to_move];
+
+    attackers |= !pos->side_to_move == LNX_SIDE_WHITE ? (white_pawn_attacks[square] & enemy->pawns) : (black_pawn_attacks[square] & enemy->pawns);
+    attackers |= knight_attacks[square] & enemy->knights;
+    attackers |= king_attacks[square] & enemy->kings;
+    attackers |= bitboard_get_bishop_attacks(square, pos->occupancy) & enemy->bishops;
+    attackers |= bitboard_get_rook_attacks(square, pos->occupancy) & enemy->rooks;
+    attackers |= bitboard_get_queen_attacks(square, pos->occupancy) & enemy->queens;
+
+    return LNX_BIT_COUNT(attackers);
+}
+
 LunoxBool position_validate(const Position* pos)
 {
     LNX_ASSERT(pos != NULL);
