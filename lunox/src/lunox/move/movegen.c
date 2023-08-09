@@ -128,6 +128,28 @@ static Bitboard calculate_pin_mask_diagonal(const Position* pos)
     return pin_mask_diagonal;
 }
 
+static uint8_t position_attack_count_on_square_without_king(const Position* pos, uint8_t side, Square square)
+{
+    LNX_ASSERT(pos != NULL);
+
+    LNX_VERIFY(square < LNX_SQUARE_OFFBOARD);
+
+    Bitboard attackers = LNX_BITBOARD_EMPTY;
+
+    const Side* attacker_side = &pos->sides[side];
+
+    Bitboard occupancy = pos->occupancy & pos->sides[side].kings;
+
+    attackers |= (side == LNX_SIDE_WHITE ? black_pawn_attacks[square] : white_pawn_attacks[square]) & attacker_side->pawns;
+    attackers |= knight_attacks[square] & attacker_side->knights;
+    attackers |= king_attacks[square] & attacker_side->kings;
+    attackers |= bitboard_get_bishop_attacks(square, occupancy) & attacker_side->bishops;
+    attackers |= bitboard_get_rook_attacks(square, occupancy) & attacker_side->rooks;
+    attackers |= bitboard_get_queen_attacks(square, occupancy) & attacker_side->queens;
+
+    return LNX_BIT_COUNT(attackers);
+}
+
 void movegen_generate_moves(const Position* pos, MoveList* move_list)
 {
     LNX_ASSERT(pos != NULL);
@@ -168,7 +190,7 @@ void movegen_generate_moves(const Position* pos, MoveList* move_list)
         {
             Square to = LNX_BIT_LSB_INDEX(moves_bitboard);
 
-            if(position_attack_count_on_square(pos, !pos->side_to_move, to) == 0)
+            if(position_attack_count_on_square_without_king(pos, !pos->side_to_move, to) == 0)
             {
                 LNX_MOVE_CLEAR_TO(move);
                 LNX_MOVE_SET_TO(move, to);
