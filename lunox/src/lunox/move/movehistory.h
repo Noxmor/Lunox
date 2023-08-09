@@ -11,7 +11,7 @@ typedef struct MoveHistoryEntry
     Square ep_square;
 } MoveHistoryEntry;
 
-#define LNX_MOVE_HISTORY_CAPACITY 8192
+#define LNX_MOVE_HISTORY_CAPACITY 5988
 
 typedef struct MoveHistory
 {
