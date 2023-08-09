@@ -13,6 +13,8 @@ enum
 
 typedef uint8_t PromotionPieceType;
 
+char promotion_piece_type_to_char(PromotionPieceType type);
+
 enum
 {
     LNX_MOVE_TYPE_NORMAL = 0,
@@ -48,5 +50,7 @@ typedef uint16_t Move;
 #define LNX_MOVE_CLEAR_TO(move) ((move) &= ~0b111111000000)
 #define LNX_MOVE_CLEAR_PROMOTION_PIECE(move) ((move) &= ~0b11000000000000)
 #define LNX_MOVE_CLEAR_TYPE(move) ((move) &= ~0b1100000000000000)
+
+void move_to_str(char* dest, Move move);
 
 #endif
