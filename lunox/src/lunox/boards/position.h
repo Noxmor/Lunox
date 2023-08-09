@@ -5,17 +5,6 @@
 
 #include "lunox/move/move.h"
 
-typedef struct Side
-{
-    Bitboard occupancy;
-    Bitboard pawns;
-    Bitboard knights;
-    Bitboard bishops;
-    Bitboard rooks;
-    Bitboard queens;
-    Bitboard kings;
-} Side;
-
 void side_calculate_occupancy(Side* side);
 
 enum
