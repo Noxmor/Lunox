@@ -4,6 +4,8 @@ void move_history_push(MoveHistory* move_history, MoveHistoryEntry entry)
 {
     LNX_ASSERT(move_history != NULL);
 
+    LNX_ASSERT(move_history->entries_count < LNX_MOVE_HISTORY_CAPACITY);
+
     move_history->entries[move_history->entries_count++] = entry;
 }
 
