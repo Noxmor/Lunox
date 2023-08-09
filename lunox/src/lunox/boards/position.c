@@ -20,6 +20,8 @@ void position_parse_fen(Position* pos, const char* fen)
 
 void position_startpos(Position* pos)
 {
+    LNX_ASSERT(pos != NULL);
+    
     Side* white = &pos->sides[LNX_SIDE_WHITE];
     Side* black = &pos->sides[LNX_SIDE_BLACK];
 
