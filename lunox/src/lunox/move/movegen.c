@@ -266,7 +266,9 @@ void movegen_generate_moves(const Position* pos, MoveList* move_list)
         LNX_BIT_LSB_RESET(pawns);
 
         moves_bitboard = ~side->occupancy & (pos->side_to_move == LNX_SIDE_WHITE ? (white_pawn_attacks[from] & pos->sides[LNX_SIDE_BLACK].occupancy) : (black_pawn_attacks[from] & pos->sides[LNX_SIDE_WHITE].occupancy));
-        moves_bitboard &= ~pin_mask_horizontal_vertical;
+        
+        if(from_bitboard & pin_mask_horizontal_vertical)
+            moves_bitboard &= pin_mask_horizontal_vertical;
 
         Bitboard pawn_push_bitboard = LNX_BITBOARD_EMPTY;
         if(from_bitboard & ~pin_mask_diagonal)
