@@ -266,28 +266,26 @@ void movegen_generate_moves(const Position* pos, MoveList* move_list)
         LNX_BIT_LSB_RESET(pawns);
 
         moves_bitboard = ~side->occupancy & (pos->side_to_move == LNX_SIDE_WHITE ? (white_pawn_attacks[from] & pos->sides[LNX_SIDE_BLACK].occupancy) : (black_pawn_attacks[from] & pos->sides[LNX_SIDE_WHITE].occupancy));
-        
+
+        Bitboard pawn_push_bitboard = LNX_BITBOARD_EMPTY;
+        if(pos->side_to_move == LNX_SIDE_WHITE)
+        {
+            pawn_push_bitboard = ~pos->occupancy & white_pawn_pushs[from];
+            pawn_push_bitboard &= ~((pos->occupancy & ~from_bitboard) << LNX_BOARD_WIDTH);
+        }
+        else
+        {
+            pawn_push_bitboard = ~pos->occupancy & black_pawn_pushs[from];
+            pawn_push_bitboard &= ~((pos->occupancy & ~from_bitboard) >> LNX_BOARD_WIDTH);
+        }
+
+        moves_bitboard = (moves_bitboard | pawn_push_bitboard) & check_mask;
+
         if(from_bitboard & pin_mask_horizontal_vertical)
             moves_bitboard &= pin_mask_horizontal_vertical;
 
-        Bitboard pawn_push_bitboard = LNX_BITBOARD_EMPTY;
-        if(from_bitboard & ~pin_mask_diagonal)
-        {
-            if(pos->side_to_move == LNX_SIDE_WHITE)
-            {
-                pawn_push_bitboard = ~pos->occupancy & white_pawn_pushs[from];
-                pawn_push_bitboard &= ~((pos->occupancy & ~from_bitboard) << LNX_BOARD_WIDTH);
-            }
-            else
-            {
-                pawn_push_bitboard = ~pos->occupancy & black_pawn_pushs[from];
-                pawn_push_bitboard &= ~((pos->occupancy & ~from_bitboard) >> LNX_BOARD_WIDTH);
-            }
-        }
-        else
+        if(from_bitboard & pin_mask_diagonal)
             moves_bitboard &= pin_mask_diagonal;
-
-        moves_bitboard = (moves_bitboard | pawn_push_bitboard) & check_mask;
 
         Move move = LNX_MOVE_NONE;
         LNX_MOVE_SET_FROM(move, from);
