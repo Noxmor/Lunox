@@ -8,6 +8,7 @@
 typedef struct MoveHistoryEntry
 {
     Move move;
+    Piece captured_piece;
     uint8_t castling_perms;
     Square ep_square;
 } MoveHistoryEntry;
