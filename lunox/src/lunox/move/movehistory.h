@@ -1,14 +1,12 @@
 #ifndef LNX_MOVE_HISTORY_H
 #define LNX_MOVE_HISTORY_H
 
-#include <lunox/move/move.h>
-
-#include <lunox/boards/board.h>
+#include <lunox/boards/bitboard.h>
 
 typedef struct MoveHistoryEntry
 {
-    Move move;
-    Piece captured_piece;
+    Side sides[2];
+    Bitboard occupancy;
     uint8_t castling_perms;
     Square ep_square;
 } MoveHistoryEntry;
