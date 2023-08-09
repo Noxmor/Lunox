@@ -1,6 +1,6 @@
 #include "movehistory.h"
 
-void move_history_push(MoveHistory* move_history, MoveHistoryEntry entry);
+void move_history_push(MoveHistory* move_history, MoveHistoryEntry entry)
 {
     LNX_ASSERT(move_history != NULL);
 
