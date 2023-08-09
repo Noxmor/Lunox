@@ -7,17 +7,6 @@
 #define LNX_BOARD_HEIGHT 8
 #define LNX_BOARD_SIZE (LNX_BOARD_WIDTH * LNX_BOARD_HEIGHT)
 
-typedef struct Side
-{
-    Bitboard occupancy;
-    Bitboard pawns;
-    Bitboard knights;
-    Bitboard bishops;
-    Bitboard rooks;
-    Bitboard queens;
-    Bitboard kings;
-} Side;
-
 #define LNX_SQUARE_TO_FILE(square) ((square) % LNX_BOARD_WIDTH)
 #define LNX_SQUARE_TO_RANK(square) ((square) / LNX_BOARD_WIDTH)
 #define LNX_FILE_RANK_TO_SQUARE(file, rank) (LNX_BOARD_WIDTH * (rank) + (file))

@@ -49,6 +49,17 @@ typedef uint64_t Bitboard;
 #define LNX_SIDE_WHITE 0
 #define LNX_SIDE_BLACK 1
 
+typedef struct Side
+{
+    Bitboard occupancy;
+    Bitboard pawns;
+    Bitboard knights;
+    Bitboard bishops;
+    Bitboard rooks;
+    Bitboard queens;
+    Bitboard kings;
+} Side;
+
 extern Bitboard white_pawn_pushs[LNX_BOARD_WIDTH * LNX_BOARD_HEIGHT];
 extern Bitboard black_pawn_pushs[LNX_BOARD_WIDTH * LNX_BOARD_HEIGHT];
 extern Bitboard white_pawn_attacks[LNX_BOARD_WIDTH * LNX_BOARD_HEIGHT];
