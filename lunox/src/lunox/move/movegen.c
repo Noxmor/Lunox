@@ -260,6 +260,8 @@ void movegen_generate_moves(const Position* pos, MoveList* move_list)
                 pawn_push_bitboard &= ~((pos->occupancy & ~from_bitboard) >> LNX_BOARD_WIDTH);
             }
         }
+        else
+            moves_bitboard &= pin_mask_diagonal;
 
         moves_bitboard = (moves_bitboard | pawn_push_bitboard) & check_mask;
 
