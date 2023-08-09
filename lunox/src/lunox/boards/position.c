@@ -264,14 +264,14 @@ uint8_t position_attack_count_on_square(const Position* pos, uint8_t side, Squar
 
     Bitboard attackers = LNX_BITBOARD_EMPTY;
 
-    const Side* attacked_side = &pos->sides[side];
+    const Side* attacker_side = &pos->sides[side];
 
-    attackers |= (pos->side_to_move == LNX_SIDE_WHITE ? white_pawn_attacks[square] : black_pawn_attacks[square]) & attacked_side->pawns;
-    attackers |= knight_attacks[square] & attacked_side->knights;
-    attackers |= king_attacks[square] & attacked_side->kings;
-    attackers |= bitboard_get_bishop_attacks(square, pos->occupancy) & attacked_side->bishops;
-    attackers |= bitboard_get_rook_attacks(square, pos->occupancy) & attacked_side->rooks;
-    attackers |= bitboard_get_queen_attacks(square, pos->occupancy) & attacked_side->queens;
+    attackers |= (side == LNX_SIDE_WHITE ? black_pawn_attacks[square] : white_pawn_attacks[square]) & attacker_side->pawns;
+    attackers |= knight_attacks[square] & attacker_side->knights;
+    attackers |= king_attacks[square] & attacker_side->kings;
+    attackers |= bitboard_get_bishop_attacks(square, pos->occupancy) & attacker_side->bishops;
+    attackers |= bitboard_get_rook_attacks(square, pos->occupancy) & attacker_side->rooks;
+    attackers |= bitboard_get_queen_attacks(square, pos->occupancy) & attacker_side->queens;
 
     return LNX_BIT_COUNT(attackers);
 }
