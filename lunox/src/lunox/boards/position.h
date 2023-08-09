@@ -4,6 +4,7 @@
 #include "lunox/boards/bitboard.h"
 
 #include "lunox/move/move.h"
+#include "lunox/move/movehistory.h"
 
 void side_calculate_occupancy(Side* side);
 
@@ -29,6 +30,8 @@ typedef struct Position
     uint8_t plys;
 
     uint8_t side_to_move;
+
+    MoveHistory history;
 } Position;
 
 void position_parse_fen(Position* pos, const char* fen);
@@ -38,6 +41,8 @@ void position_startpos(Position* pos);
 void position_calculate_occupancy(Position* pos);
 
 void position_make_move(Position* pos, Move move);
+
+void position_undo_move(Position* pos);
 
 uint8_t position_attack_count_on_square(const Position* pos, uint8_t side, Square square);
 

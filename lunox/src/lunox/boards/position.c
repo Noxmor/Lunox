@@ -49,6 +49,8 @@ void position_startpos(Position* pos)
     pos->plys = 0;
 
     pos->side_to_move = LNX_SIDE_WHITE;
+
+    move_history_reset(&pos->history);
 }
 
 void position_calculate_occupancy(Position* pos)
@@ -64,16 +66,27 @@ void position_make_move(Position* pos, Move move)
     
     LNX_VERIFY(position_validate(pos));
 
+    MoveHistoryEntry entry =
+    {
+        .sides[LNX_SIDE_WHITE] = pos->sides[LNX_SIDE_WHITE],
+        .sides[LNX_SIDE_BLACK] = pos->sides[LNX_SIDE_BLACK],
+        .occupancy = pos->occupancy,
+        .castling_perms = pos->castling_perms,
+        .ep_square = pos->ep_square,
+    };
+
+    move_history_push(&pos->history, entry);
+
     pos->ep_square = LNX_SQUARE_OFFBOARD;
 
     Side* white = &pos->sides[LNX_SIDE_WHITE];
     Side* black = &pos->sides[LNX_SIDE_BLACK];
 
-    const Square from = LNX_MOVE_GET_FROM(move);
-    const Square to = LNX_MOVE_GET_TO(move);
+    Square from = LNX_MOVE_GET_FROM(move);
+    Square to = LNX_MOVE_GET_TO(move);
 
-    const Bitboard from_bitboard = LNX_BIT(from);
-    const Bitboard to_bitboard = LNX_BIT(to);
+    Bitboard from_bitboard = LNX_BIT(from);
+    Bitboard to_bitboard = LNX_BIT(to);
 
     switch(LNX_MOVE_GET_TYPE(move))
     {
@@ -119,7 +132,7 @@ void position_make_move(Position* pos, Move move)
             white->pawns &= ~from_bitboard;
             black->pawns &= ~from_bitboard;
 
-            const PromotionPieceType type = LNX_MOVE_GET_PROMOTION_PIECE(move);
+            PromotionPieceType type = LNX_MOVE_GET_PROMOTION_PIECE(move);
 
             switch(type)
             {
@@ -212,6 +225,29 @@ void position_make_move(Position* pos, Move move)
     position_calculate_occupancy(pos);
 
     ++pos->plys;
+
+    pos->side_to_move = !pos->side_to_move;
+
+    LNX_VERIFY(position_validate(pos));
+}
+
+void position_undo_move(Position* pos)
+{
+    LNX_ASSERT(pos != NULL);
+
+    LNX_VERIFY(position_validate(pos));
+
+    MoveHistoryEntry entry = move_history_pop(&pos->history);
+
+    pos->sides[LNX_SIDE_WHITE] = entry.sides[LNX_SIDE_WHITE];
+    pos->sides[LNX_SIDE_BLACK] = entry.sides[LNX_SIDE_BLACK];
+
+    pos->occupancy = entry.occupancy;
+
+    pos->castling_perms = entry.castling_perms;
+    pos->ep_square = entry.ep_square;
+
+    --pos->plys;
 
     pos->side_to_move = !pos->side_to_move;
 
