@@ -164,8 +164,6 @@ void movegen_generate_moves(const Position* pos, MoveList* move_list)
     Bitboard pin_mask_diagonal = calculate_pin_mask_diagonal(pos);
     Bitboard pin_mask = pin_mask_horizontal_vertical | pin_mask_diagonal;
 
-    bitboard_print(pin_mask, LNX_SIDE_WHITE);
-
     const Side* side = &pos->sides[pos->side_to_move];
 
     Bitboard kings = side->kings;
