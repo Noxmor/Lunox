@@ -164,14 +164,15 @@ void movegen_generate_moves(const Position* pos, MoveList* move_list)
     Bitboard pin_mask_diagonal = calculate_pin_mask_diagonal(pos);
     Bitboard pin_mask = pin_mask_horizontal_vertical | pin_mask_diagonal;
 
+    bitboard_print(pin_mask, LNX_SIDE_WHITE);
+
     const Side* side = &pos->sides[pos->side_to_move];
 
     Bitboard kings = side->kings;
     Bitboard pawns = side->pawns;
     Bitboard knights = side->knights;
-    Bitboard bishops = side->bishops;
-    Bitboard rooks = side->rooks;
-    Bitboard queens = side->queens;
+    Bitboard bishops = side->bishops | side->queens;
+    Bitboard rooks = side->rooks | side->queens;
 
     Bitboard moves_bitboard = LNX_BITBOARD_EMPTY;
 
@@ -394,36 +395,6 @@ void movegen_generate_moves(const Position* pos, MoveList* move_list)
 
         if(from_bitboard & pin_mask_horizontal_vertical)
             moves_bitboard &= pin_mask_horizontal_vertical;
-
-        Move move = LNX_MOVE_NONE;
-        LNX_MOVE_SET_FROM(move, from);
-        LNX_MOVE_SET_TYPE(move, LNX_MOVE_TYPE_NORMAL);
-
-        while (moves_bitboard)
-        {
-            Square to = LNX_BIT_LSB_INDEX(moves_bitboard);
-
-            LNX_MOVE_CLEAR_TO(move);
-            LNX_MOVE_SET_TO(move, to);
-            move_list_add_move(move_list, move);
-
-            LNX_BIT_LSB_RESET(moves_bitboard);
-        }
-    }
-
-    while(queens)
-    {
-        Square from = LNX_BIT_LSB_INDEX(queens);
-        Bitboard from_bitboard = LNX_BIT(from);
-        LNX_BIT_LSB_RESET(queens);
-
-        moves_bitboard = (~side->occupancy & bitboard_get_queen_attacks(from, pos->occupancy)) & check_mask;
-
-        if(from_bitboard & pin_mask_horizontal_vertical)
-            moves_bitboard &= pin_mask_horizontal_vertical;
-
-        if(from_bitboard & pin_mask_diagonal)
-            moves_bitboard &= pin_mask_diagonal;
 
         Move move = LNX_MOVE_NONE;
         LNX_MOVE_SET_FROM(move, from);
