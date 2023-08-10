@@ -9,6 +9,7 @@ typedef struct MoveHistoryEntry
     Bitboard occupancy;
     uint8_t castling_perms;
     Square ep_square;
+    uint8_t fifty_move_rule;
 } MoveHistoryEntry;
 
 #define LNX_MOVE_HISTORY_CAPACITY 5988
