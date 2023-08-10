@@ -27,14 +27,16 @@ typedef struct Position
 
     Square ep_square;
     
-    uint8_t plys;
+    uint8_t fifty_move_rule;
+
+    uint16_t plys;
 
     uint8_t side_to_move;
 
     MoveHistory history;
 } Position;
 
-void position_parse_fen(Position* pos, const char* fen);
+LunoxBool position_parse_fen(Position* pos, const char* fen);
 
 void position_startpos(Position* pos);
 
