@@ -1,6 +1,8 @@
 #include "position.h"
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "lunox/boards/board.h"
 
@@ -11,11 +13,140 @@ void side_calculate_occupancy(Side* side)
     side->occupancy = side->pawns | side->knights | side->bishops | side->rooks | side->queens | side->kings;
 }
 
-void position_parse_fen(Position* pos, const char* fen)
+LunoxBool position_parse_fen(Position* pos, const char* fen)
 {
     LNX_ASSERT(pos != NULL);
 
     LNX_ASSERT(fen != NULL);
+
+    move_history_reset(&pos->history);
+
+#define LNX_FEN_CAPACITY 128
+    char fen_buffer[LNX_FEN_CAPACITY];
+    strncpy(fen_buffer, fen, sizeof(fen_buffer) - 1);
+    fen_buffer[LNX_FEN_CAPACITY - 1] = '\0';
+
+    int8_t file = LNX_FILE_A;
+    int8_t rank = LNX_RANK_8;
+
+    char* token = strtok(fen_buffer, " ");
+    while(*token)
+    {
+        Bitboard square_bitboard = LNX_BIT(LNX_FILE_RANK_TO_SQUARE(file, rank));
+
+        switch(*token)
+        {
+            case 'P': ++file; pos->sides[LNX_SIDE_WHITE].occupancy |= square_bitboard; pos->sides[LNX_SIDE_WHITE].pawns |= square_bitboard; break;
+            case 'N': ++file; pos->sides[LNX_SIDE_WHITE].occupancy |= square_bitboard; pos->sides[LNX_SIDE_WHITE].knights |= square_bitboard; break;
+            case 'B': ++file; pos->sides[LNX_SIDE_WHITE].occupancy |= square_bitboard; pos->sides[LNX_SIDE_WHITE].bishops |= square_bitboard; break;
+            case 'R': ++file; pos->sides[LNX_SIDE_WHITE].occupancy |= square_bitboard; pos->sides[LNX_SIDE_WHITE].rooks |= square_bitboard; break;
+            case 'Q': ++file; pos->sides[LNX_SIDE_WHITE].occupancy |= square_bitboard; pos->sides[LNX_SIDE_WHITE].queens |= square_bitboard; break;
+            case 'K': ++file; pos->sides[LNX_SIDE_WHITE].occupancy |= square_bitboard; pos->sides[LNX_SIDE_WHITE].kings |= square_bitboard; break;
+
+            case 'p': ++file; pos->sides[LNX_SIDE_BLACK].occupancy |= square_bitboard; pos->sides[LNX_SIDE_BLACK].pawns |= square_bitboard; break;
+            case 'n': ++file; pos->sides[LNX_SIDE_BLACK].occupancy |= square_bitboard; pos->sides[LNX_SIDE_BLACK].knights |= square_bitboard; break;
+            case 'b': ++file; pos->sides[LNX_SIDE_BLACK].occupancy |= square_bitboard; pos->sides[LNX_SIDE_BLACK].bishops |= square_bitboard; break;
+            case 'r': ++file; pos->sides[LNX_SIDE_BLACK].occupancy |= square_bitboard; pos->sides[LNX_SIDE_BLACK].rooks |= square_bitboard; break;
+            case 'q': ++file; pos->sides[LNX_SIDE_BLACK].occupancy |= square_bitboard; pos->sides[LNX_SIDE_BLACK].queens |= square_bitboard; break;
+            case 'k': ++file; pos->sides[LNX_SIDE_BLACK].occupancy |= square_bitboard; pos->sides[LNX_SIDE_BLACK].kings |= square_bitboard; break;
+
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            {
+                uint8_t count = *token - '0';
+                file += count;
+                break;
+            }
+
+            case '/':
+            {
+                --rank;
+                file = LNX_FILE_A;
+                ++token;
+                continue;
+            }
+
+            default:  printf("Invalid FEN: Could not parse piece position character '%c'!\n", *token); return LNX_FALSE;
+        }
+
+        ++token;
+    }
+
+    token = strtok(NULL, " ");
+
+    switch(*token)
+    {
+        case 'w': pos->side_to_move = LNX_SIDE_WHITE; break;
+        case 'b': pos->side_to_move = LNX_SIDE_BLACK; break;
+
+        default:  printf("Invalid FEN: Could not parse side to move character '%c'!\n", *token); return LNX_FALSE;
+    }
+
+    pos->castling_perms = LNX_CASTLING_PERM_NONE;
+    token = strtok(NULL, " ");
+    while(*token && *token != '-')
+    {
+        switch(*token)
+        {
+            case 'K': pos->castling_perms |= LNX_CASTLING_PERM_WHITE_KINGSIDE; break;
+            case 'Q': pos->castling_perms |= LNX_CASTLING_PERM_WHITE_QUEENSIDE; break;
+            case 'k': pos->castling_perms |= LNX_CASTLING_PERM_BLACK_KINGSIDE; break;
+            case 'q': pos->castling_perms |= LNX_CASTLING_PERM_BLACK_QUEENSIDE; break;
+
+            default:  printf("Invalid FEN: Could not parse castling permission character '%c'!\n", *token); return LNX_FALSE;
+        }
+
+        ++token;
+    }
+
+    Side* white = &pos->sides[LNX_SIDE_WHITE];
+    Side* black = &pos->sides[LNX_SIDE_BLACK];
+
+    side_calculate_occupancy(white);
+    side_calculate_occupancy(black);
+
+    position_calculate_occupancy(pos);
+
+    token = strtok(NULL, " ");
+    if(*token == '-' && token[1] == '\0')
+        pos->ep_square = LNX_SQUARE_OFFBOARD;
+    else if(token[0] >= 'a' && token[0] <= 'h' && token[1] >= '1' && token[1] <= '8' && token[2] == '\0')
+        pos->ep_square = LNX_FILE_RANK_TO_SQUARE(token[0] - 'a', token[1] - '1');
+    else
+    {
+        printf("Invalid FEN: Could not parse en passant square \"%s\"!\n", token);
+        return LNX_FALSE;
+    }
+
+    token = strtok(NULL, " ");
+    int fifty_move_rule = atoi(token);
+    if(fifty_move_rule < 0)
+    {
+        printf("Invalid FEN: Half move clock cannot be negative!\n");
+        return LNX_FALSE;
+    }
+
+    pos->fifty_move_rule = fifty_move_rule;
+
+    token = strtok(NULL, " ");
+    int full_move = atoi(token);
+    if(full_move < 1)
+    {
+        printf("Invalid FEN: Full move clock needs to be at least 1!\n");
+        return LNX_FALSE;
+    }
+
+    pos->plys = 2 * (full_move - 1) + pos->side_to_move == LNX_SIDE_WHITE ? 0 : 1;
+
+    LNX_VERIFY(position_validate(pos));
+
+    return LNX_TRUE;
 }
 
 void position_startpos(Position* pos)
@@ -47,6 +178,8 @@ void position_startpos(Position* pos)
     pos->castling_perms = LNX_CASTLING_PERM_WHITE_KINGSIDE | LNX_CASTLING_PERM_WHITE_QUEENSIDE | LNX_CASTLING_PERM_BLACK_KINGSIDE | LNX_CASTLING_PERM_BLACK_QUEENSIDE;
 
     pos->ep_square = LNX_SQUARE_OFFBOARD;
+
+    pos->fifty_move_rule = 0;
 
     pos->plys = 0;
 
