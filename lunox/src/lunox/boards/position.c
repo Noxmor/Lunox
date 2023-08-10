@@ -208,11 +208,14 @@ void position_make_move(Position* pos, Move move)
         .occupancy = pos->occupancy,
         .castling_perms = pos->castling_perms,
         .ep_square = pos->ep_square,
+        .fifty_move_rule = pos->fifty_move_rule
     };
 
     move_history_push(&pos->history, entry);
 
     pos->ep_square = LNX_SQUARE_OFFBOARD;
+
+    ++pos->fifty_move_rule;
 
     Side* white = &pos->sides[LNX_SIDE_WHITE];
     Side* black = &pos->sides[LNX_SIDE_BLACK];
@@ -222,6 +225,9 @@ void position_make_move(Position* pos, Move move)
 
     Bitboard from_bitboard = LNX_BIT(from);
     Bitboard to_bitboard = LNX_BIT(to);
+
+    if(to_bitboard & pos->occupancy || to_bitboard & (white->pawns | black->pawns))
+        pos->fifty_move_rule = 0;
 
     switch(LNX_MOVE_GET_TYPE(move))
     {
@@ -381,6 +387,7 @@ void position_undo_move(Position* pos)
 
     pos->castling_perms = entry.castling_perms;
     pos->ep_square = entry.ep_square;
+    pos->fifty_move_rule = entry.fifty_move_rule;
 
     --pos->plys;
 
