@@ -87,9 +87,9 @@ static Bitboard calculate_pin_mask_horizontal_vertical(const Position* pos)
 
         if(slider_occupancy & from_bitboard && bitboard_get_rook_attacks(from, LNX_BITBOARD_EMPTY) & kings)
         {
-            Bitboard ray = bitboard_get_rook_attacks(from, pos->occupancy) & bitboard_get_rook_attacks(king_square, slider_occupancy);
+            Bitboard ray = bitboard_get_rook_attacks(from, kings) & bitboard_get_rook_attacks(king_square, slider_occupancy);
 
-            if(LNX_BIT_COUNT(bitboard_get_rook_attacks(from, kings) & bitboard_get_rook_attacks(king_square, slider_occupancy) & pos->sides[pos->side_to_move].occupancy) < 2)
+            if(LNX_BIT_COUNT(ray & pos->sides[pos->side_to_move].occupancy) < 2)
                 pin_mask_horizontal_vertical |= from_bitboard | ray;
         }
     }
@@ -118,9 +118,9 @@ static Bitboard calculate_pin_mask_diagonal(const Position* pos)
 
         if(slider_occupancy & from_bitboard && bitboard_get_bishop_attacks(from, LNX_BITBOARD_EMPTY) & kings)
         {
-            Bitboard ray = bitboard_get_bishop_attacks(from, pos->occupancy) & bitboard_get_bishop_attacks(king_square, slider_occupancy);
+            Bitboard ray = bitboard_get_bishop_attacks(from, kings) & bitboard_get_bishop_attacks(king_square, slider_occupancy);
 
-            if(LNX_BIT_COUNT(bitboard_get_bishop_attacks(from, kings) & bitboard_get_bishop_attacks(king_square, slider_occupancy) & pos->sides[pos->side_to_move].occupancy) < 2)
+            if(LNX_BIT_COUNT(ray & pos->sides[pos->side_to_move].occupancy) < 2)
                 pin_mask_diagonal |= from_bitboard | ray;
         }
     }
