@@ -138,7 +138,7 @@ static uint8_t position_attack_count_on_square_without_king(const Position* pos,
 
     const Side* attacker_side = &pos->sides[side];
 
-    Bitboard occupancy = pos->occupancy & pos->sides[side].kings;
+    Bitboard occupancy = pos->occupancy & ~pos->sides[side].kings;
 
     attackers |= (side == LNX_SIDE_WHITE ? black_pawn_attacks[square] : white_pawn_attacks[square]) & attacker_side->pawns;
     attackers |= knight_attacks[square] & attacker_side->knights;
