@@ -3,10 +3,10 @@
 #include "lunox/boards/board.h"
 
 static Bitboard white_king_kingside_castling_bitboard = LNX_BIT(LNX_SQUARE_F1) | LNX_BIT(LNX_SQUARE_G1);
-static Bitboard white_king_queenside_castling_bitboard = LNX_BIT(LNX_SQUARE_D1) | LNX_BIT(LNX_SQUARE_C1);
+static Bitboard white_king_queenside_castling_bitboard = LNX_BIT(LNX_SQUARE_D1) | LNX_BIT(LNX_SQUARE_C1) | LNX_BIT(LNX_SQUARE_B1);
 
 static Bitboard black_king_kingside_castling_bitboard = LNX_BIT(LNX_SQUARE_F8) | LNX_BIT(LNX_SQUARE_G8);
-static Bitboard black_king_queenside_castling_bitboard = LNX_BIT(LNX_SQUARE_D8) | LNX_BIT(LNX_SQUARE_C8);
+static Bitboard black_king_queenside_castling_bitboard = LNX_BIT(LNX_SQUARE_D8) | LNX_BIT(LNX_SQUARE_C8) | LNX_BIT(LNX_SQUARE_B8);
 
 static Bitboard calculate_check_mask(const Position* pos)
 {
@@ -77,21 +77,25 @@ static Bitboard calculate_pin_mask_horizontal_vertical(const Position* pos)
 
     Bitboard pin_mask_horizontal_vertical = LNX_BITBOARD_EMPTY;
 
+    const Side* side = &pos->sides[pos->side_to_move];
     const Side* enemy = &pos->sides[!pos->side_to_move];
 
     Bitboard slider_occupancy = enemy->rooks | enemy->queens;
 
-    for(Square from = LNX_SQUARE_A1; from <= LNX_SQUARE_H8; ++from)
+    while(slider_occupancy)
     {
+        Square from = LNX_BIT_LSB_INDEX(slider_occupancy);
         Bitboard from_bitboard = LNX_BIT(from);
 
-        if(slider_occupancy & from_bitboard && bitboard_get_rook_attacks(from, LNX_BITBOARD_EMPTY) & kings)
+        if(bitboard_get_rook_attacks(from, enemy->occupancy) & kings)
         {
-            Bitboard ray = bitboard_get_rook_attacks(from, kings) & bitboard_get_rook_attacks(king_square, slider_occupancy);
+            Bitboard ray = bitboard_get_rook_attacks(from, kings) & bitboard_get_rook_attacks(king_square, from_bitboard);
 
-            if(LNX_BIT_COUNT(ray & pos->sides[pos->side_to_move].occupancy) < 2)
+            if(LNX_BIT_COUNT(ray & side->occupancy) < 2)
                 pin_mask_horizontal_vertical |= from_bitboard | ray;
         }
+
+        LNX_BIT_LSB_RESET(slider_occupancy);
     }
 
     return pin_mask_horizontal_vertical;
@@ -108,27 +112,31 @@ static Bitboard calculate_pin_mask_diagonal(const Position* pos)
 
     Bitboard pin_mask_diagonal = LNX_BITBOARD_EMPTY;
 
+    const Side* side = &pos->sides[pos->side_to_move];
     const Side* enemy = &pos->sides[!pos->side_to_move];
 
     Bitboard slider_occupancy = enemy->bishops | enemy->queens;
 
-    for(Square from = LNX_SQUARE_A1; from <= LNX_SQUARE_H8; ++from)
+    while(slider_occupancy)
     {
+        Square from = LNX_BIT_LSB_INDEX(slider_occupancy);
         Bitboard from_bitboard = LNX_BIT(from);
 
-        if(slider_occupancy & from_bitboard && bitboard_get_bishop_attacks(from, LNX_BITBOARD_EMPTY) & kings)
+        if(bitboard_get_bishop_attacks(from, enemy->occupancy) & kings)
         {
-            Bitboard ray = bitboard_get_bishop_attacks(from, kings) & bitboard_get_bishop_attacks(king_square, slider_occupancy);
+            Bitboard ray = bitboard_get_bishop_attacks(from, kings) & bitboard_get_bishop_attacks(king_square, from_bitboard);
 
-            if(LNX_BIT_COUNT(ray & pos->sides[pos->side_to_move].occupancy) < 2)
+            if(LNX_BIT_COUNT(ray & side->occupancy) < 2)
                 pin_mask_diagonal |= from_bitboard | ray;
         }
+
+        LNX_BIT_LSB_RESET(slider_occupancy);
     }
 
     return pin_mask_diagonal;
 }
 
-static uint8_t position_attack_count_on_square_without_king(const Position* pos, uint8_t side, Square square)
+static uint8_t position_attack_count_on_square_without_enemy_king(const Position* pos, uint8_t side, Square square)
 {
     LNX_ASSERT(pos != NULL);
 
@@ -138,7 +146,7 @@ static uint8_t position_attack_count_on_square_without_king(const Position* pos,
 
     const Side* attacker_side = &pos->sides[side];
 
-    Bitboard occupancy = pos->occupancy & ~pos->sides[side].kings;
+    Bitboard occupancy = pos->occupancy & ~pos->sides[!side].kings;
 
     attackers |= (side == LNX_SIDE_WHITE ? black_pawn_attacks[square] : white_pawn_attacks[square]) & attacker_side->pawns;
     attackers |= knight_attacks[square] & attacker_side->knights;
@@ -189,7 +197,7 @@ void movegen_generate_moves(const Position* pos, MoveList* move_list)
         {
             Square to = LNX_BIT_LSB_INDEX(moves_bitboard);
 
-            if(position_attack_count_on_square_without_king(pos, !pos->side_to_move, to) == 0)
+            if(position_attack_count_on_square_without_enemy_king(pos, !pos->side_to_move, to) == 0)
             {
                 LNX_MOVE_CLEAR_TO(move);
                 LNX_MOVE_SET_TO(move, to);
@@ -264,7 +272,7 @@ void movegen_generate_moves(const Position* pos, MoveList* move_list)
         Bitboard from_bitboard = LNX_BIT(from);
         LNX_BIT_LSB_RESET(pawns);
 
-        moves_bitboard = ~side->occupancy & (pos->side_to_move == LNX_SIDE_WHITE ? (white_pawn_attacks[from] & pos->sides[LNX_SIDE_BLACK].occupancy) : (black_pawn_attacks[from] & pos->sides[LNX_SIDE_WHITE].occupancy));
+        moves_bitboard = pos->side_to_move == LNX_SIDE_WHITE ? (white_pawn_attacks[from] & pos->sides[LNX_SIDE_BLACK].occupancy) : (black_pawn_attacks[from] & pos->sides[LNX_SIDE_WHITE].occupancy);
 
         Bitboard pawn_push_bitboard = LNX_BITBOARD_EMPTY;
         if(pos->side_to_move == LNX_SIDE_WHITE)
@@ -293,31 +301,88 @@ void movegen_generate_moves(const Position* pos, MoveList* move_list)
         while (moves_bitboard)
         {
             Square to = LNX_BIT_LSB_INDEX(moves_bitboard);
+            Rank to_rank = LNX_SQUARE_TO_RANK(to);
 
             LNX_MOVE_CLEAR_TO(move);
             LNX_MOVE_SET_TO(move, to);
-            move_list_add_move(move_list, move);
 
-            LNX_BIT_LSB_RESET(moves_bitboard);
-        }
-
-        if(pos->ep_square != LNX_SQUARE_OFFBOARD && from_bitboard & ~pin_mask_horizontal_vertical && LNX_BIT(pos->ep_square) & ~pin_mask_diagonal)
-        {
-            if(pos->side_to_move == LNX_SIDE_WHITE)
+            if(to_rank == LNX_RANK_1 || to_rank == LNX_RANK_8)
             {
-                if((white_pawn_attacks[from] & check_mask) & LNX_BIT(pos->ep_square))
-                {
-                    LNX_MOVE_CLEAR_TO(move);
-                    LNX_MOVE_SET_TO(move, pos->ep_square);
+                LNX_MOVE_CLEAR_TYPE(move);
+                LNX_MOVE_SET_TYPE(move, LNX_MOVE_TYPE_PROMOTION);
 
-                    LNX_MOVE_CLEAR_TYPE(move);
-                    LNX_MOVE_SET_TYPE(move, LNX_MOVE_TYPE_EN_PASSANT);
+                for(PromotionPieceType promotion_piece = LNX_PROMOTION_PIECE_TYPE_KNIGHT; promotion_piece <= LNX_PROMOTION_PIECE_TYPE_QUEEN; ++promotion_piece)
+                {
+                    LNX_MOVE_CLEAR_PROMOTION_PIECE(move);
+                    LNX_MOVE_SET_PROMOTION_PIECE(move, promotion_piece);
                     move_list_add_move(move_list, move);
                 }
             }
             else
+                move_list_add_move(move_list, move);
+
+            LNX_BIT_LSB_RESET(moves_bitboard);
+        }
+
+        Bitboard pawn_attacks = pos->side_to_move == LNX_SIDE_WHITE ? white_pawn_attacks[from] : black_pawn_attacks[from];
+        Square captured_pawn_square = pos->side_to_move == LNX_SIDE_WHITE ? (pos->ep_square - LNX_BOARD_WIDTH) : (pos->ep_square + LNX_BOARD_WIDTH);
+        Bitboard captured_pawn_bitboard = LNX_BIT(captured_pawn_square);
+        if(pos->ep_square != LNX_SQUARE_OFFBOARD && pawn_attacks & LNX_BIT(pos->ep_square) && (pawn_attacks | captured_pawn_bitboard) & check_mask)
+        {
+            const Side* enemy = &pos->sides[!pos->side_to_move];
+            Bitboard enemy_bishops = enemy->bishops | enemy->queens;
+            Bitboard enemy_rooks = enemy->rooks | enemy->queens;
+
+            Square king_square = LNX_BIT_LSB_INDEX(side->kings);
+            LunoxBool captured_pawn_pinned = LNX_FALSE;
+
+            while(enemy_bishops)
             {
-                if((black_pawn_attacks[from] & check_mask) & LNX_BIT(pos->ep_square))
+                Square enemy_bishop = LNX_BIT_LSB_INDEX(enemy_bishops);
+
+                Bitboard bishop_attacks = bitboard_get_bishop_attacks(enemy_bishop, side->kings);
+                Bitboard ray = bishop_attacks & bitboard_get_bishop_attacks(king_square, LNX_BIT(enemy_bishop));
+
+                if(bishop_attacks & side->kings && ray & captured_pawn_bitboard && LNX_BIT_COUNT((ray & pos->occupancy) & ~captured_pawn_bitboard) == 0)
+                {
+                    captured_pawn_pinned = LNX_TRUE;
+                    break;
+                }
+
+                LNX_BIT_LSB_RESET(enemy_bishops);
+            }
+
+            while(enemy_rooks)
+            {
+                Square enemy_rook = LNX_BIT_LSB_INDEX(enemy_rooks);
+
+                Bitboard rock_attacks = bitboard_get_rook_attacks(enemy_rook, side->kings);
+                Bitboard ray = rock_attacks & bitboard_get_rook_attacks(king_square, LNX_BIT(enemy_rook));
+
+                if(rock_attacks & side->kings && ray & captured_pawn_bitboard && LNX_BIT_COUNT((ray & pos->occupancy) & ~from_bitboard) == 1)
+                {
+                    captured_pawn_pinned = LNX_TRUE;
+                    break;
+                }
+
+                LNX_BIT_LSB_RESET(enemy_rooks);
+            }
+
+            if(!captured_pawn_pinned && from_bitboard & ~pin_mask_horizontal_vertical)
+            {
+                if(from_bitboard & pin_mask_diagonal)
+                {
+                    if(LNX_BIT(pos->ep_square) & pin_mask_diagonal)
+                    {
+                        LNX_MOVE_CLEAR_TO(move);
+                        LNX_MOVE_SET_TO(move, pos->ep_square);
+
+                        LNX_MOVE_CLEAR_TYPE(move);
+                        LNX_MOVE_SET_TYPE(move, LNX_MOVE_TYPE_EN_PASSANT);
+                        move_list_add_move(move_list, move);
+                    }
+                }
+                else
                 {
                     LNX_MOVE_CLEAR_TO(move);
                     LNX_MOVE_SET_TO(move, pos->ep_square);
