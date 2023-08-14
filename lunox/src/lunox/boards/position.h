@@ -36,6 +36,8 @@ typedef struct Position
     MoveHistory history;
 } Position;
 
+#define LNX_FEN_CAPACITY 128
+
 LunoxBool position_parse_fen(Position* pos, const char* fen);
 
 void position_startpos(Position* pos);

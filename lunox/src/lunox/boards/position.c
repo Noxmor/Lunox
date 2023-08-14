@@ -37,8 +37,7 @@ LunoxBool position_parse_fen(Position* pos, const char* fen)
     black->kings = LNX_BITBOARD_EMPTY;
 
     move_history_reset(&pos->history);
-
-#define LNX_FEN_CAPACITY 128
+    
     char fen_buffer[LNX_FEN_CAPACITY];
     strncpy(fen_buffer, fen, sizeof(fen_buffer) - 1);
     fen_buffer[LNX_FEN_CAPACITY - 1] = '\0';
