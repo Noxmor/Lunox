@@ -19,6 +19,23 @@ LunoxBool position_parse_fen(Position* pos, const char* fen)
 
     LNX_ASSERT(fen != NULL);
 
+    Side* white = &pos->sides[LNX_SIDE_WHITE];
+    Side* black = &pos->sides[LNX_SIDE_BLACK];
+
+    white->pawns = LNX_BITBOARD_EMPTY;
+    white->knights = LNX_BITBOARD_EMPTY;
+    white->bishops = LNX_BITBOARD_EMPTY;
+    white->rooks = LNX_BITBOARD_EMPTY;
+    white->queens = LNX_BITBOARD_EMPTY;
+    white->kings = LNX_BITBOARD_EMPTY;
+
+    black->pawns = LNX_BITBOARD_EMPTY;
+    black->knights = LNX_BITBOARD_EMPTY;
+    black->bishops = LNX_BITBOARD_EMPTY;
+    black->rooks = LNX_BITBOARD_EMPTY;
+    black->queens = LNX_BITBOARD_EMPTY;
+    black->kings = LNX_BITBOARD_EMPTY;
+
     move_history_reset(&pos->history);
 
 #define LNX_FEN_CAPACITY 128
@@ -36,19 +53,19 @@ LunoxBool position_parse_fen(Position* pos, const char* fen)
 
         switch(*token)
         {
-            case 'P': ++file; pos->sides[LNX_SIDE_WHITE].occupancy |= square_bitboard; pos->sides[LNX_SIDE_WHITE].pawns |= square_bitboard; break;
-            case 'N': ++file; pos->sides[LNX_SIDE_WHITE].occupancy |= square_bitboard; pos->sides[LNX_SIDE_WHITE].knights |= square_bitboard; break;
-            case 'B': ++file; pos->sides[LNX_SIDE_WHITE].occupancy |= square_bitboard; pos->sides[LNX_SIDE_WHITE].bishops |= square_bitboard; break;
-            case 'R': ++file; pos->sides[LNX_SIDE_WHITE].occupancy |= square_bitboard; pos->sides[LNX_SIDE_WHITE].rooks |= square_bitboard; break;
-            case 'Q': ++file; pos->sides[LNX_SIDE_WHITE].occupancy |= square_bitboard; pos->sides[LNX_SIDE_WHITE].queens |= square_bitboard; break;
-            case 'K': ++file; pos->sides[LNX_SIDE_WHITE].occupancy |= square_bitboard; pos->sides[LNX_SIDE_WHITE].kings |= square_bitboard; break;
+            case 'P': ++file; white->pawns |= square_bitboard; break;
+            case 'N': ++file; white->knights |= square_bitboard; break;
+            case 'B': ++file; white->bishops |= square_bitboard; break;
+            case 'R': ++file; white->rooks |= square_bitboard; break;
+            case 'Q': ++file; white->queens |= square_bitboard; break;
+            case 'K': ++file; white->kings |= square_bitboard; break;
 
-            case 'p': ++file; pos->sides[LNX_SIDE_BLACK].occupancy |= square_bitboard; pos->sides[LNX_SIDE_BLACK].pawns |= square_bitboard; break;
-            case 'n': ++file; pos->sides[LNX_SIDE_BLACK].occupancy |= square_bitboard; pos->sides[LNX_SIDE_BLACK].knights |= square_bitboard; break;
-            case 'b': ++file; pos->sides[LNX_SIDE_BLACK].occupancy |= square_bitboard; pos->sides[LNX_SIDE_BLACK].bishops |= square_bitboard; break;
-            case 'r': ++file; pos->sides[LNX_SIDE_BLACK].occupancy |= square_bitboard; pos->sides[LNX_SIDE_BLACK].rooks |= square_bitboard; break;
-            case 'q': ++file; pos->sides[LNX_SIDE_BLACK].occupancy |= square_bitboard; pos->sides[LNX_SIDE_BLACK].queens |= square_bitboard; break;
-            case 'k': ++file; pos->sides[LNX_SIDE_BLACK].occupancy |= square_bitboard; pos->sides[LNX_SIDE_BLACK].kings |= square_bitboard; break;
+            case 'p': ++file; black->pawns |= square_bitboard; break;
+            case 'n': ++file; black->knights |= square_bitboard; break;
+            case 'b': ++file; black->bishops |= square_bitboard; break;
+            case 'r': ++file; black->rooks |= square_bitboard; break;
+            case 'q': ++file; black->queens |= square_bitboard; break;
+            case 'k': ++file; black->kings |= square_bitboard; break;
 
             case '1':
             case '2':
@@ -104,9 +121,6 @@ LunoxBool position_parse_fen(Position* pos, const char* fen)
 
         ++token;
     }
-
-    Side* white = &pos->sides[LNX_SIDE_WHITE];
-    Side* black = &pos->sides[LNX_SIDE_BLACK];
 
     side_calculate_occupancy(white);
     side_calculate_occupancy(black);
@@ -201,21 +215,7 @@ void position_make_move(Position* pos, Move move)
     
     LNX_VERIFY(position_validate(pos));
 
-    MoveHistoryEntry entry =
-    {
-        .sides[LNX_SIDE_WHITE] = pos->sides[LNX_SIDE_WHITE],
-        .sides[LNX_SIDE_BLACK] = pos->sides[LNX_SIDE_BLACK],
-        .occupancy = pos->occupancy,
-        .castling_perms = pos->castling_perms,
-        .ep_square = pos->ep_square,
-        .fifty_move_rule = pos->fifty_move_rule
-    };
-
-    move_history_push(&pos->history, entry);
-
     pos->ep_square = LNX_SQUARE_OFFBOARD;
-
-    ++pos->fifty_move_rule;
 
     Side* white = &pos->sides[LNX_SIDE_WHITE];
     Side* black = &pos->sides[LNX_SIDE_BLACK];
@@ -226,8 +226,49 @@ void position_make_move(Position* pos, Move move)
     Bitboard from_bitboard = LNX_BIT(from);
     Bitboard to_bitboard = LNX_BIT(to);
 
-    if(to_bitboard & pos->occupancy || to_bitboard & (white->pawns | black->pawns))
+    MoveHistoryEntry entry;
+    entry.move = move;
+    entry.castling_perms = pos->castling_perms;
+    entry.fifty_move_rule = pos->fifty_move_rule;
+    entry.captured_piece_type = LNX_PIECE_TYPE_NONE;
+
+    ++pos->fifty_move_rule;
+
+    const Side* enemy = &pos->sides[!pos->side_to_move];
+    if(enemy->occupancy & to_bitboard)
+    {
+        if(enemy->pawns & to_bitboard)
+            entry.captured_piece_type = LNX_PIECE_TYPE_PAWN;
+
+        if(enemy->knights & to_bitboard)
+            entry.captured_piece_type = LNX_PIECE_TYPE_KNIGHT;
+
+        if(enemy->bishops & to_bitboard)
+            entry.captured_piece_type = LNX_PIECE_TYPE_BISHOP;
+
+        if(enemy->rooks & to_bitboard)
+            entry.captured_piece_type = LNX_PIECE_TYPE_ROOK;
+
+        if(enemy->queens & to_bitboard)
+            entry.captured_piece_type = LNX_PIECE_TYPE_QUEEN;
+
+        LNX_VERIFY(!(enemy->kings & to_bitboard));
+    }
+
+    move_history_push(&pos->history, entry);
+
+    if(to_bitboard & pos->occupancy || from_bitboard & (white->pawns | black->pawns))
         pos->fifty_move_rule = 0;
+
+    switch(to)
+    {
+        case LNX_SQUARE_A1: LNX_BIT_CLEAR(pos->castling_perms, LNX_CASTLING_PERM_WHITE_QUEENSIDE); break;
+        case LNX_SQUARE_H1: LNX_BIT_CLEAR(pos->castling_perms, LNX_CASTLING_PERM_WHITE_KINGSIDE); break;
+        case LNX_SQUARE_A8: LNX_BIT_CLEAR(pos->castling_perms, LNX_CASTLING_PERM_BLACK_QUEENSIDE); break;
+        case LNX_SQUARE_H8: LNX_BIT_CLEAR(pos->castling_perms, LNX_CASTLING_PERM_BLACK_KINGSIDE); break;
+
+        default: break;
+    }
 
     switch(LNX_MOVE_GET_TYPE(move))
     {
@@ -238,9 +279,9 @@ void position_make_move(Position* pos, Move move)
                 case LNX_SQUARE_A1: LNX_BIT_CLEAR(pos->castling_perms, LNX_CASTLING_PERM_WHITE_QUEENSIDE); break;
                 case LNX_SQUARE_E1: LNX_BIT_CLEAR(pos->castling_perms, LNX_CASTLING_PERM_WHITE_KINGSIDE | LNX_CASTLING_PERM_WHITE_QUEENSIDE); break;
                 case LNX_SQUARE_H1: LNX_BIT_CLEAR(pos->castling_perms, LNX_CASTLING_PERM_WHITE_KINGSIDE); break;
-                case LNX_SQUARE_A8: LNX_BIT_CLEAR(pos->castling_perms, LNX_CASTLING_PERM_WHITE_QUEENSIDE); break;
+                case LNX_SQUARE_A8: LNX_BIT_CLEAR(pos->castling_perms, LNX_CASTLING_PERM_BLACK_QUEENSIDE); break;
                 case LNX_SQUARE_E8: LNX_BIT_CLEAR(pos->castling_perms, LNX_CASTLING_PERM_BLACK_KINGSIDE | LNX_CASTLING_PERM_BLACK_QUEENSIDE); break;
-                case LNX_SQUARE_H8: LNX_BIT_CLEAR(pos->castling_perms, LNX_CASTLING_PERM_WHITE_KINGSIDE); break;
+                case LNX_SQUARE_H8: LNX_BIT_CLEAR(pos->castling_perms, LNX_CASTLING_PERM_BLACK_KINGSIDE); break;
 
                 default: break;
             }
@@ -272,6 +313,16 @@ void position_make_move(Position* pos, Move move)
         {
             white->pawns &= ~from_bitboard;
             black->pawns &= ~from_bitboard;
+
+            white->knights &= ~to_bitboard;
+            white->bishops &= ~to_bitboard;
+            white->rooks &= ~to_bitboard;
+            white->queens &= ~to_bitboard;
+
+            black->knights &= ~to_bitboard;
+            black->bishops &= ~to_bitboard;
+            black->rooks &= ~to_bitboard;
+            black->queens &= ~to_bitboard;
 
             PromotionPieceType type = LNX_MOVE_GET_PROMOTION_PIECE(move);
 
@@ -378,20 +429,140 @@ void position_undo_move(Position* pos)
 
     LNX_VERIFY(position_validate(pos));
 
-    MoveHistoryEntry entry = move_history_pop(&pos->history);
-
-    pos->sides[LNX_SIDE_WHITE] = entry.sides[LNX_SIDE_WHITE];
-    pos->sides[LNX_SIDE_BLACK] = entry.sides[LNX_SIDE_BLACK];
-
-    pos->occupancy = entry.occupancy;
-
-    pos->castling_perms = entry.castling_perms;
-    pos->ep_square = entry.ep_square;
-    pos->fifty_move_rule = entry.fifty_move_rule;
+    pos->ep_square = LNX_SQUARE_OFFBOARD;
 
     --pos->plys;
 
     pos->side_to_move = !pos->side_to_move;
+
+    Side* white = &pos->sides[LNX_SIDE_WHITE];
+    Side* black = &pos->sides[LNX_SIDE_BLACK];
+
+    Side* side = &pos->sides[pos->side_to_move];
+    Side* enemy = &pos->sides[!pos->side_to_move];
+
+    MoveHistoryEntry entry = move_history_pop(&pos->history);
+    Move last_move = entry.move;
+
+    pos->castling_perms = entry.castling_perms;
+
+    pos->fifty_move_rule = entry.fifty_move_rule;
+
+    Square from = LNX_MOVE_GET_FROM(last_move);
+    Square to = LNX_MOVE_GET_TO(last_move);
+    MoveType type = LNX_MOVE_GET_TYPE(last_move);
+
+    Bitboard from_bitboard = LNX_BIT(from);
+    Bitboard to_bitboard = LNX_BIT(to);
+
+    switch(type)
+    {
+        case LNX_MOVE_TYPE_NORMAL:
+        {
+            side->pawns = side->pawns & to_bitboard ? side->pawns | from_bitboard : side->pawns;
+            side->knights = side->knights & to_bitboard ? side->knights | from_bitboard : side->knights;
+            side->bishops = side->bishops & to_bitboard ? side->bishops | from_bitboard : side->bishops;
+            side->rooks = side->rooks & to_bitboard ? side->rooks | from_bitboard : side->rooks;
+            side->queens = side->queens & to_bitboard ? side->queens | from_bitboard : side->queens;
+            side->kings = side->kings & to_bitboard ? side->kings | from_bitboard : side->kings;
+            
+            break;
+        }
+
+        case LNX_MOVE_TYPE_CASTLING:
+        {
+            switch(to)
+            {
+                case LNX_SQUARE_C1:
+                {
+                    LNX_BIT_SET(side->kings, LNX_BIT(LNX_SQUARE_E1));
+                    LNX_BIT_SET(side->rooks, LNX_BIT(LNX_SQUARE_A1));
+                    LNX_BIT_CLEAR(side->rooks, LNX_BIT(LNX_SQUARE_D1));
+
+                    break;
+                }
+
+                case LNX_SQUARE_G1:
+                {
+                    LNX_BIT_SET(side->kings, LNX_BIT(LNX_SQUARE_E1));
+                    LNX_BIT_SET(side->rooks, LNX_BIT(LNX_SQUARE_H1));
+                    LNX_BIT_CLEAR(side->rooks, LNX_BIT(LNX_SQUARE_F1));
+                    
+                    break;
+                }
+
+                case LNX_SQUARE_C8:
+                {
+                    LNX_BIT_SET(side->kings, LNX_BIT(LNX_SQUARE_E8));
+                    LNX_BIT_SET(side->rooks, LNX_BIT(LNX_SQUARE_A8));
+                    LNX_BIT_CLEAR(side->rooks, LNX_BIT(LNX_SQUARE_D8));
+                    
+                    break;
+                }
+
+                case LNX_SQUARE_G8:
+                {
+                    LNX_BIT_SET(side->kings, LNX_BIT(LNX_SQUARE_E8));
+                    LNX_BIT_SET(side->rooks, LNX_BIT(LNX_SQUARE_H8));
+                    LNX_BIT_CLEAR(side->rooks, LNX_BIT(LNX_SQUARE_F8));
+                    
+                    break;
+                }
+
+                default: LNX_ASSERT(LNX_FALSE); break;
+            }
+            
+            break;
+        }
+
+        case LNX_MOVE_TYPE_PROMOTION:
+        {
+            LNX_BIT_SET(side->pawns, from_bitboard);
+
+            break;
+        }
+
+        case LNX_MOVE_TYPE_EN_PASSANT:
+        {
+            pos->ep_square = to;
+
+            LNX_BIT_SET(side->pawns, from_bitboard);
+
+            if(pos->side_to_move == LNX_SIDE_WHITE)
+                LNX_BIT_SET(enemy->pawns, LNX_BIT(pos->ep_square - LNX_BOARD_WIDTH));
+            else
+                LNX_BIT_SET(enemy->pawns, LNX_BIT(pos->ep_square + LNX_BOARD_WIDTH));
+
+            break;
+        }
+
+        default: LNX_ASSERT(LNX_FALSE); break;
+    }
+
+    switch(entry.captured_piece_type)
+    {
+        case LNX_PIECE_TYPE_NONE: break;
+
+        case LNX_PIECE_TYPE_PAWN: LNX_BIT_SET(enemy->pawns, to_bitboard); break;
+        case LNX_PIECE_TYPE_KNIGHT: LNX_BIT_SET(enemy->knights, to_bitboard); break;
+        case LNX_PIECE_TYPE_BISHOP: LNX_BIT_SET(enemy->bishops, to_bitboard); break;
+        case LNX_PIECE_TYPE_ROOK: LNX_BIT_SET(enemy->rooks, to_bitboard); break;
+        case LNX_PIECE_TYPE_QUEEN: LNX_BIT_SET(enemy->queens, to_bitboard); break;
+
+        default: LNX_ASSERT(LNX_FALSE); break;
+    }
+
+    LNX_BIT_CLEAR(side->pawns, to_bitboard);
+    LNX_BIT_CLEAR(side->knights, to_bitboard);
+    LNX_BIT_CLEAR(side->bishops, to_bitboard);
+    LNX_BIT_CLEAR(side->rooks, to_bitboard);
+    LNX_BIT_CLEAR(side->queens, to_bitboard);
+    LNX_BIT_CLEAR(side->kings, to_bitboard);
+
+    side_calculate_occupancy(white);
+    side_calculate_occupancy(black);
+
+    position_calculate_occupancy(pos);
 
     LNX_VERIFY(position_validate(pos));
 }
@@ -421,41 +592,260 @@ LunoxBool position_validate(const Position* pos)
     LNX_ASSERT(pos != NULL);
 
     if(pos->ep_square > LNX_SQUARE_OFFBOARD)
+    {
+        printf("[ERROR]: Invalid en passant square!\n");
         return LNX_FALSE;
+    }
 
     if(pos->side_to_move != LNX_SIDE_WHITE && pos->side_to_move != LNX_SIDE_BLACK)
+    {
+        printf("[ERROR]: Invalid side to move!\n");
         return LNX_FALSE;
+    }
 
     const Side* white = &pos->sides[LNX_SIDE_WHITE];
     const Side* black = &pos->sides[LNX_SIDE_BLACK];
 
-    if(pos->occupancy != (white->occupancy | black->occupancy))
+    if(pos->castling_perms & (LNX_CASTLING_PERM_WHITE_KINGSIDE | LNX_CASTLING_PERM_WHITE_QUEENSIDE) && ~white->kings & LNX_BIT(LNX_SQUARE_E1))
+    {
+        printf("[ERROR]: White has still castling permissions, however there is no king on e1!\n");
         return LNX_FALSE;
+    }
+
+    if(pos->castling_perms & LNX_CASTLING_PERM_WHITE_KINGSIDE && ~white->rooks & LNX_BIT(LNX_SQUARE_H1))
+    {
+        printf("[ERROR]: White has still castling permission to castle kingside, however there is no rook on h1!\n");
+        return LNX_FALSE;
+    }
+
+    if(pos->castling_perms & LNX_CASTLING_PERM_WHITE_QUEENSIDE && ~white->rooks & LNX_BIT(LNX_SQUARE_A1))
+    {
+        printf("[ERROR]: White has still castling permission to castle queenside, however there is no rook on a1!\n");
+        return LNX_FALSE;
+    }
+
+    if(pos->castling_perms & (LNX_CASTLING_PERM_BLACK_KINGSIDE | LNX_CASTLING_PERM_BLACK_QUEENSIDE) && ~black->kings & LNX_BIT(LNX_SQUARE_E8))
+    {
+        printf("[ERROR]: Black has still castling permissions, however there is no king on e8!\n");
+        return LNX_FALSE;
+    }
+
+    if(pos->castling_perms & LNX_CASTLING_PERM_BLACK_KINGSIDE && ~black->rooks & LNX_BIT(LNX_SQUARE_H8))
+    {
+        printf("[ERROR]: Black has still castling permission to castle kingside, however there is no rook on h8!\n");
+        return LNX_FALSE;
+    }
+
+    if(pos->castling_perms & LNX_CASTLING_PERM_BLACK_QUEENSIDE && ~black->rooks & LNX_BIT(LNX_SQUARE_A8))
+    {
+        printf("[ERROR]: Black has still castling permission to castle queenside, however there is no rook on a8!\n");
+        return LNX_FALSE;
+    }
+
+    if(pos->occupancy != (white->occupancy | black->occupancy))
+    {
+        printf("[ERROR]: Position's occupancy does not match with white's and black's occupancy!\n");
+        return LNX_FALSE;
+    }
 
     if(white->occupancy & black->occupancy)
+    {
+        printf("[ERROR]: Occupancies of white and black are not distinct!\n");
         return LNX_FALSE;
+    }
 
     if(white->occupancy != (white->pawns | white->knights | white->bishops | white->rooks | white->queens | white->kings))
+    {
+        printf("[ERROR]: White's occupancy does not match with the occupancies of the white pieces!\n");
         return LNX_FALSE;
+    }
 
     if(black->occupancy != (black->pawns | black->knights | black->bishops | black->rooks | black->queens | black->kings))
+    {
+        printf("[ERROR]: Black's occupancy does not match with the occupancies of the black pieces!\n");
         return LNX_FALSE;
+    }
 
-    if(white->pawns & (white->knights | white->bishops | white->rooks | white->queens | white->kings))
+    if(white->pawns & white->knights)
+    {
+        printf("[ERROR]: White's pawn and knight occupancies are not distinct!\n");
         return LNX_FALSE;
+    }
 
-    if(white->knights & (white->bishops | white->rooks | white->queens | white->kings))
+    if(white->pawns & white->bishops)
+    {
+        printf("[ERROR]: White's pawn and bishop occupancies are not distinct!\n");
         return LNX_FALSE;
+    }
 
-    if(white->bishops & (white->rooks | white->queens | white->kings))
+    if(white->pawns & white->rooks)
+    {
+        printf("[ERROR]: White's pawn and rook occupancies are not distinct!\n");
         return LNX_FALSE;
+    }
 
-    if(white->rooks & (white->queens | white->kings))
+    if(white->pawns & white->queens)
+    {
+        printf("[ERROR]: White's pawn and queen occupancies are not distinct!\n");
         return LNX_FALSE;
+    }
+
+    if(white->pawns & white->kings)
+    {
+        printf("[ERROR]: White's pawn and king occupancies are not distinct!\n");
+        return LNX_FALSE;
+    }
+
+    if(white->knights & white->bishops)
+    {
+        printf("[ERROR]: White's knight and bishop occupancies are not distinct!\n");
+        return LNX_FALSE;
+    }
+
+    if(white->knights & white->rooks)
+    {
+        printf("[ERROR]: White's knight and rook occupancies are not distinct!\n");
+        return LNX_FALSE;
+    }
+
+    if(white->knights & white->queens)
+    {
+        printf("[ERROR]: White's knight and queen occupancies are not distinct!\n");
+        return LNX_FALSE;
+    }
+
+    if(white->knights & white->kings)
+    {
+        printf("[ERROR]: White's knight and king occupancies are not distinct!\n");
+        return LNX_FALSE;
+    }
+
+    if(white->bishops & white->rooks)
+    {
+        printf("[ERROR]: White's bishop and rook occupancies are not distinct!\n");
+        return LNX_FALSE;
+    }
+
+    if(white->bishops & white->queens)
+    {
+        printf("[ERROR]: White's bishop and queen occupancies are not distinct!\n");
+        return LNX_FALSE;
+    }
+
+    if(white->bishops & white->kings)
+    {
+        printf("[ERROR]: White's bishop and king occupancies are not distinct!\n");
+        return LNX_FALSE;
+    }
+
+    if(white->rooks & white->queens)
+    {
+        printf("[ERROR]: White's rook and queen occupancies are not distinct!\n");
+        return LNX_FALSE;
+    }
+
+    if(white->rooks & white->kings)
+    {
+        printf("[ERROR]: White's rook and king occupancies are not distinct!\n");
+        return LNX_FALSE;
+    }
 
     if(white->queens & white->kings)
+    {
+        printf("[ERROR]: White's queen and king occupancies are not distinct!\n");
         return LNX_FALSE;
+    }
+    
+    if(black->pawns & black->knights)
+    {
+        printf("[ERROR]: Black's pawn and knight occupancies are not distinct!\n");
+        return LNX_FALSE;
+    }
 
+    if(black->pawns & black->bishops)
+    {
+        printf("[ERROR]: Black's pawn and bishop occupancies are not distinct!\n");
+        return LNX_FALSE;
+    }
+
+    if(black->pawns & black->rooks)
+    {
+        printf("[ERROR]: Black's pawn and rook occupancies are not distinct!\n");
+        return LNX_FALSE;
+    }
+
+    if(black->pawns & black->queens)
+    {
+        printf("[ERROR]: Black's pawn and queen occupancies are not distinct!\n");
+        return LNX_FALSE;
+    }
+
+    if(black->pawns & black->kings)
+    {
+        printf("[ERROR]: Black's pawn and king occupancies are not distinct!\n");
+        return LNX_FALSE;
+    }
+
+    if(black->knights & black->bishops)
+    {
+        printf("[ERROR]: Black's knight and bishop occupancies are not distinct!\n");
+        return LNX_FALSE;
+    }
+
+    if(black->knights & black->rooks)
+    {
+        printf("[ERROR]: Black's knight and rook occupancies are not distinct!\n");
+        return LNX_FALSE;
+    }
+
+    if(black->knights & black->queens)
+    {
+        printf("[ERROR]: Black's knight and queen occupancies are not distinct!\n");
+        return LNX_FALSE;
+    }
+
+    if(black->knights & black->kings)
+    {
+        printf("[ERROR]: Black's knight and king occupancies are not distinct!\n");
+        return LNX_FALSE;
+    }
+
+    if(black->bishops & black->rooks)
+    {
+        printf("[ERROR]: Black's bishop and rook occupancies are not distinct!\n");
+        return LNX_FALSE;
+    }
+
+    if(black->bishops & black->queens)
+    {
+        printf("[ERROR]: Black's bishop and queen occupancies are not distinct!\n");
+        return LNX_FALSE;
+    }
+
+    if(black->bishops & black->kings)
+    {
+        printf("[ERROR]: Black's bishop and king occupancies are not distinct!\n");
+        return LNX_FALSE;
+    }
+
+    if(black->rooks & black->queens)
+    {
+        printf("[ERROR]: Black's rook and queen occupancies are not distinct!\n");
+        return LNX_FALSE;
+    }
+
+    if(black->rooks & black->kings)
+    {
+        printf("[ERROR]: Black's rook and king occupancies are not distinct!\n");
+        return LNX_FALSE;
+    }
+
+    if(black->queens & black->kings)
+    {
+        printf("[ERROR]: Black's queen and king occupancies are not distinct!\n");
+        return LNX_FALSE;
+    }
+    
     if(black->pawns & (black->knights | black->bishops | black->rooks | black->queens | black->kings))
         return LNX_FALSE;
 
@@ -475,7 +865,10 @@ LunoxBool position_validate(const Position* pos)
 
     LNX_VERIFY(enemy->kings != LNX_BITBOARD_EMPTY);
     if(position_attack_count_on_square(pos, pos->side_to_move, LNX_BIT_LSB_INDEX(enemy->kings)) != 0)
+    {
+        printf("[ERROR]: It's %s to move, however the enemy king is in check!\n", pos->side_to_move == LNX_SIDE_WHITE ? "white" : "black");
         return LNX_FALSE;
+    }
 
     return LNX_TRUE;
 }
