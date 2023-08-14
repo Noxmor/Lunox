@@ -3,13 +3,14 @@
 
 #include <lunox/boards/bitboard.h>
 
+#include <lunox/move/move.h>
+
 typedef struct MoveHistoryEntry
 {
-    Side sides[2];
-    Bitboard occupancy;
+    Move move;
     uint8_t castling_perms;
-    Square ep_square;
     uint8_t fifty_move_rule;
+    PieceType captured_piece_type;
 } MoveHistoryEntry;
 
 #define LNX_MOVE_HISTORY_CAPACITY 5988
