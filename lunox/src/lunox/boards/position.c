@@ -233,7 +233,9 @@ void position_make_move(Position* pos, Move move)
 
     ++pos->fifty_move_rule;
 
-    const Side* enemy = &pos->sides[!pos->side_to_move];
+    Side* side = &pos->sides[pos->side_to_move];
+    Side* enemy = &pos->sides[!pos->side_to_move];
+
     if(enemy->occupancy & to_bitboard)
     {
         if(enemy->pawns & to_bitboard)
@@ -291,75 +293,42 @@ void position_make_move(Position* pos, Move move)
             if(black->pawns & from_bitboard && to_bitboard == from_bitboard >> 2 * LNX_BOARD_WIDTH)
                 pos->ep_square = from - LNX_BOARD_WIDTH;
 
-            white->pawns = white->pawns & from_bitboard ? ((white->pawns | to_bitboard) & ~from_bitboard) : white->pawns & ~to_bitboard;
-            white->knights = white->knights & from_bitboard ? ((white->knights | to_bitboard) & ~from_bitboard) : white->knights & ~to_bitboard;
-            white->bishops = white->bishops & from_bitboard ? ((white->bishops | to_bitboard) & ~from_bitboard) : white->bishops & ~to_bitboard;
-            white->rooks = white->rooks & from_bitboard ? ((white->rooks | to_bitboard) & ~from_bitboard) : white->rooks & ~to_bitboard;
-            white->queens = white->queens & from_bitboard ? ((white->queens | to_bitboard) & ~from_bitboard) : white->queens & ~to_bitboard;
-            white->kings = white->kings & from_bitboard ? ((white->kings | to_bitboard) & ~from_bitboard) : white->kings & ~to_bitboard;
+            side->pawns = side->pawns & from_bitboard ? ((side->pawns | to_bitboard) & ~from_bitboard) : side->pawns & ~to_bitboard;
+            side->knights = side->knights & from_bitboard ? ((side->knights | to_bitboard) & ~from_bitboard) : side->knights & ~to_bitboard;
+            side->bishops = side->bishops & from_bitboard ? ((side->bishops | to_bitboard) & ~from_bitboard) : side->bishops & ~to_bitboard;
+            side->rooks = side->rooks & from_bitboard ? ((side->rooks | to_bitboard) & ~from_bitboard) : side->rooks & ~to_bitboard;
+            side->queens = side->queens & from_bitboard ? ((side->queens | to_bitboard) & ~from_bitboard) : side->queens & ~to_bitboard;
+            side->kings = side->kings & from_bitboard ? ((side->kings | to_bitboard) & ~from_bitboard) : side->kings & ~to_bitboard;
 
-            black->pawns = black->pawns & from_bitboard ? ((black->pawns | to_bitboard) & ~from_bitboard) : black->pawns & ~to_bitboard;
-            black->knights = black->knights & from_bitboard ? ((black->knights | to_bitboard) & ~from_bitboard) : black->knights & ~to_bitboard;
-            black->bishops = black->bishops & from_bitboard ? ((black->bishops | to_bitboard) & ~from_bitboard) : black->bishops & ~to_bitboard;
-            black->rooks = black->rooks & from_bitboard ? ((black->rooks | to_bitboard) & ~from_bitboard) : black->rooks & ~to_bitboard;
-            black->queens = black->queens & from_bitboard ? ((black->queens | to_bitboard) & ~from_bitboard) : black->queens & ~to_bitboard;
-            black->kings = black->kings & from_bitboard ? ((black->kings | to_bitboard) & ~from_bitboard) : black->kings & ~to_bitboard;
+            LNX_BIT_CLEAR(enemy->pawns, to_bitboard);
+            LNX_BIT_CLEAR(enemy->knights, to_bitboard);
+            LNX_BIT_CLEAR(enemy->bishops, to_bitboard);
+            LNX_BIT_CLEAR(enemy->rooks, to_bitboard);
+            LNX_BIT_CLEAR(enemy->queens, to_bitboard);
+            LNX_BIT_CLEAR(enemy->kings, to_bitboard);
 
             break;
         }
 
         case LNX_MOVE_TYPE_PROMOTION:
         {
-            white->pawns &= ~from_bitboard;
-            black->pawns &= ~from_bitboard;
+            LNX_BIT_CLEAR(side->pawns, from_bitboard);
 
-            white->knights &= ~to_bitboard;
-            white->bishops &= ~to_bitboard;
-            white->rooks &= ~to_bitboard;
-            white->queens &= ~to_bitboard;
-
-            black->knights &= ~to_bitboard;
-            black->bishops &= ~to_bitboard;
-            black->rooks &= ~to_bitboard;
-            black->queens &= ~to_bitboard;
+            LNX_BIT_CLEAR(enemy->knights, to_bitboard);
+            LNX_BIT_CLEAR(enemy->bishops, to_bitboard);
+            LNX_BIT_CLEAR(enemy->rooks, to_bitboard);
+            LNX_BIT_CLEAR(enemy->queens, to_bitboard);
 
             PromotionPieceType type = LNX_MOVE_GET_PROMOTION_PIECE(move);
 
             switch(type)
             {
-                case LNX_PROMOTION_PIECE_TYPE_KNIGHT:
-                {
-                    white->knights = pos->side_to_move ? white->knights : (white->knights | to_bitboard);
-                    black->knights = pos->side_to_move ? (black->knights | to_bitboard) : black->knights;
+                case LNX_PROMOTION_PIECE_TYPE_KNIGHT: LNX_BIT_SET(side->knights, to_bitboard); break;
+                case LNX_PROMOTION_PIECE_TYPE_BISHOP: LNX_BIT_SET(side->bishops, to_bitboard); break;
+                case LNX_PROMOTION_PIECE_TYPE_ROOK: LNX_BIT_SET(side->rooks, to_bitboard); break;
+                case LNX_PROMOTION_PIECE_TYPE_QUEEN: LNX_BIT_SET(side->queens, to_bitboard); break;
 
-                    break;
-                }
-
-                case LNX_PROMOTION_PIECE_TYPE_BISHOP:
-                {
-                    white->bishops = pos->side_to_move ? white->bishops : (white->bishops | to_bitboard);
-                    black->bishops = pos->side_to_move ? (black->bishops | to_bitboard) : black->bishops;
-
-                    break;
-                }
-
-                case LNX_PROMOTION_PIECE_TYPE_ROOK:
-                {
-                    white->rooks = pos->side_to_move ? white->rooks : (white->rooks | to_bitboard);
-                    black->rooks = pos->side_to_move ? (black->rooks | to_bitboard) : black->rooks;
-
-                    break;
-                }
-
-                case LNX_PROMOTION_PIECE_TYPE_QUEEN:
-                {
-                    white->queens = pos->side_to_move ? white->queens : (white->queens | to_bitboard);
-                    black->queens = pos->side_to_move ? (black->queens | to_bitboard) : black->queens;
-
-                    break;
-                }
-
-                default: LNX_ASSERT(LNX_FALSE);
+                default: LNX_ASSERT(LNX_FALSE); break;
             }
             
             break;
