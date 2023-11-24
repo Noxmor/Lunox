@@ -3,9 +3,12 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdarg.h>
+#include <ctype.h>
 #include <string.h>
 #include <stdint.h>
 #include <time.h>
+#include <errno.h>
 
 #define CBREW_TRUE 1
 #define CBREW_FALSE 0
@@ -31,6 +34,10 @@ typedef uint8_t CbrewBool;
 #include <Windows.h>
 #elif defined(__linux__) || defined(__gnu_linux__)
 #define CBREW_PLATFORM_LINUX
+#include <sys/stat.h>
+#include <limits.h>
+#include <unistd.h>
+#include <dirent.h>
 #if defined(__ANDROID__)
 #define CBREW_PLATFORM_ANDROID
 #endif
@@ -62,11 +69,18 @@ typedef uint8_t CbrewBool;
 #define CBREW_PATH_SEPARATOR_STR "\\"
 #define CBREW_FILENAME_MAX 256
 #define CBREW_FILEPATH_MAX MAX_PATH
-#define CBREW_COMMAND_LENGTH_MAX 8192
+
+#elif defined(CBREW_PLATFORM_LINUX)
+#define CBREW_PATH_SEPARATOR '/'
+#define CBREW_PATH_SEPARATOR_STR "/"
+#define CBREW_FILENAME_MAX 256
+#define CBREW_FILEPATH_MAX PATH_MAX
 #endif
 
+#define CBREW_COMMAND_LENGTH_MAX 8192
+
 #define CBREW_SOURCE_FILE "cbrew" CBREW_PATH_SEPARATOR_STR "cbrew.c"
-#define CBREW_OLD_NAME "cbrew.old"
+#define CBREW_OLD_NAME "cbrew" CBREW_PATH_SEPARATOR_STR "cbrew.old"
 
 /* Console colors */
 
@@ -193,7 +207,7 @@ typedef uint8_t CbrewBool;
         }\
         \
         char old_name[CBREW_FILEPATH_MAX];\
-        cbrew_executable_filepath(old_name);\
+        cbrew_executable_filepath(old_name, argv[0]);\
         \
         if(!cbrew_first_file_is_older(old_name, CBREW_SOURCE_FILE))\
         {\
@@ -208,14 +222,15 @@ typedef uint8_t CbrewBool;
             exit(EXIT_FAILURE);\
         }\
         \
-        if(!cbrew_command("%s -Wall -Wextra -O3 -o cbrew %s", CBREW_COMPILER, CBREW_SOURCE_FILE))\
+        if(!cbrew_command("%s -Wall -Wextra -O3 -o cbrew%ccbrew %s", CBREW_COMPILER, CBREW_PATH_SEPARATOR, CBREW_SOURCE_FILE))\
         {\
             CBREW_LOG_ERROR("Failed to rebuild!");\
             cbrew_file_rename(CBREW_OLD_NAME, old_name);\
             exit(EXIT_FAILURE);\
         }\
         \
-        cbrew_self_destruct();\
+        if(!cbrew_self_destruct())\
+            CBREW_LOG_WARN("Failed to remove old executable!");\
         \
         CBREW_LOG_INFO("Successfully rebuilt");\
         \
@@ -279,8 +294,10 @@ typedef struct CbrewProject
 
 /**
 * Builds all projects with all configurations that have been registered with cbrew.
+* @param argc argc of the main() function.
+* @param argv argv of the main() function.
 */
-void cbrew_build(void);
+void cbrew_build(int argc, char** argv);
 
 /* Projects */
 
@@ -477,11 +494,10 @@ char* cbrew_create_links_str(char** links, size_t links_count);
 /* IO */
 
 /**
-* Creates a string with the filepath consisting of name and extension of the cbrew executable.
-* This string must be freed by the caller.
+* Copies the filepath inside argv[0] into filepath with the correct extension, if the extension of the executable is not already inside argv[0].
 * @param filepath A string large enough to store the filepath.
 */
-void cbrew_executable_filepath(char* filepath);
+void cbrew_executable_filepath(char* filepath, const char* argv0);
 
 /**
 * Executes a command on the command prompt.
@@ -575,8 +591,9 @@ CbrewBool cbrew_dir_create(const char* dir);
 
 /**
 * Self destructs the executable.
+* @return Returns CBREW_TRUE on success, CBREW_FALSE otherwise.
 */
-void cbrew_self_destruct(void);
+CbrewBool cbrew_self_destruct(void);
 
 #ifdef CBREW_IMPLEMENTATION
 
@@ -584,13 +601,19 @@ typedef struct CbrewHandler
 {
     CbrewProject* projects;
     size_t projects_count;
+
+    const char* argv0;
 } CbrewHandler;
 
 static CbrewHandler handler;
 
-void cbrew_build(void)
+void cbrew_build(int argc, char** argv)
 {
+    (void)argc;
+
     const clock_t start = clock();
+
+    handler.argv0 = argv[0];
 
     CbrewBool success = CBREW_TRUE;
 
@@ -901,7 +924,7 @@ CbrewBool cbrew_project_config_file_is_already_compiled(const CbrewProject* proj
         return CBREW_FALSE;
 
     char executable[CBREW_FILEPATH_MAX];
-    cbrew_executable_filepath(executable);
+    cbrew_executable_filepath(executable, handler.argv0);
 
     if(cbrew_first_file_is_older(obj_filepath, executable))
         return CBREW_FALSE;
@@ -1452,17 +1475,16 @@ CbrewBool cbrew_file_matches_wildcard(const char* filepath, const char* wildcard
 
 #ifdef CBREW_PLATFORM_WINDOWS
 
-void cbrew_executable_filepath(char* filepath)
+void cbrew_executable_filepath(char* filepath, const char* argv0)
 {
     CBREW_ASSERT(filepath != NULL);
-    
-    char executable[CBREW_FILEPATH_MAX];
-    GetModuleFileName(NULL, executable, CBREW_FILEPATH_MAX);
+    CBREW_ASSERT(argv0 != NULL);
 
-    const char* path = strrchr(executable, CBREW_PATH_SEPARATOR);
-    path = path == NULL ? executable : path + 1;
-
-    strcpy(filepath, path);
+    const char* dot = strrchr(argv0, '.');
+    if(dot == NULL)
+        sprintf(filepath, "%s.exe", argv0);
+    else
+        strcpy(filepath, argv0);
 }
 
 CbrewBool cbrew_first_file_is_older(const char* first_file, const char* second_file)
@@ -1535,8 +1557,6 @@ char** cbrew_find_files(const char* dir, size_t* files_count)
 	WIN32_FIND_DATA fd;
 	HANDLE find = FindFirstFile(dir_search_path, &fd);
 
-    const CbrewBool this_dir = strcmp(dir, ".") == 0;
-
 	if (find != INVALID_HANDLE_VALUE)
 	{
 		do
@@ -1546,16 +1566,8 @@ char** cbrew_find_files(const char* dir, size_t* files_count)
 				++files_found;
 				files = realloc(files, files_found * sizeof(char*));
 
-				if(this_dir)
-				{
-					files[files_found - 1] = malloc((strlen(fd.cFileName) + 1) * sizeof(char));
-                	strcpy(files[files_found - 1], fd.cFileName);
-				}
-				else
-				{
-					files[files_found - 1] = malloc((strlen(dir) + 1 + strlen(fd.cFileName) + 1) * sizeof(char));
-                	sprintf(files[files_found - 1], "%s%c%s", dir, CBREW_PATH_SEPARATOR, fd.cFileName);
-				}
+				files[files_found - 1] = malloc((strlen(dir) + 1 + strlen(fd.cFileName) + 1) * sizeof(char));
+                sprintf(files[files_found - 1], "%s%c%s", dir, CBREW_PATH_SEPARATOR, fd.cFileName);
 			}
 		} while (FindNextFile(find, &fd));
 
@@ -1584,9 +1596,6 @@ char** cbrew_find_files_recursive(const char* dir, size_t* files_count)
 	WIN32_FIND_DATA fd;
 	HANDLE find = FindFirstFile(dir_search_path, &fd);
 
-	const CbrewBool this_dir = strcmp(dir, ".") == 0;
-	const char* dir_start = dir[0] == '.' ? dir + 2 : dir;
-
 	if (find != INVALID_HANDLE_VALUE)
 	{
 		do
@@ -1596,16 +1605,8 @@ char** cbrew_find_files_recursive(const char* dir, size_t* files_count)
 				++files_found;
 				files = realloc(files, files_found * sizeof(char*));
 
-				if(this_dir)
-				{
-					files[files_found - 1] = malloc((strlen(fd.cFileName) + 1) * sizeof(char));
-                	strcpy(files[files_found - 1], fd.cFileName);
-				}
-				else
-				{
-					files[files_found - 1] = malloc((strlen(dir_start) + 1 + strlen(fd.cFileName) + 1) * sizeof(char));
-                	sprintf(files[files_found - 1], "%s%c%s", dir_start, CBREW_PATH_SEPARATOR, fd.cFileName);
-				}
+				files[files_found - 1] = malloc((strlen(dir) + 1 + strlen(fd.cFileName) + 1) * sizeof(char));
+                sprintf(files[files_found - 1], "%s%c%s", dir, CBREW_PATH_SEPARATOR, fd.cFileName);
 			}
             else if(strcmp(fd.cFileName, ".") != 0 && strcmp(fd.cFileName, "..") != 0)
             {
@@ -1667,7 +1668,7 @@ CbrewBool cbrew_dir_create(const char* dir)
     return GetLastError() != ERROR_ALREADY_EXISTS;
 }
 
-void cbrew_self_destruct(void)
+CbrewBool cbrew_self_destruct(void)
 {
     static const char* bat_script_template = 
         ":Repeat\r\n"
@@ -1681,8 +1682,12 @@ void cbrew_self_destruct(void)
     GetTempPath(CBREW_FILEPATH_MAX, bat_filepath);
     strcat(bat_filepath, "cbrew.bat");
 
-    GetModuleFileName(NULL, executable_filepath, CBREW_FILEPATH_MAX);
-    sprintf(strrchr(executable_filepath, CBREW_PATH_SEPARATOR) + 1, "%s", CBREW_OLD_NAME);
+    if(!GetCurrentDirectory(CBREW_FILEPATH_MAX, executable_filepath))
+        return CBREW_FALSE;
+
+    strcat(executable_filepath, CBREW_PATH_SEPARATOR_STR CBREW_OLD_NAME);
+
+    printf("Filepath: %s\n", executable_filepath);
 
     const HANDLE bat_handle = CreateFile(bat_filepath, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 
@@ -1698,6 +1703,168 @@ void cbrew_self_destruct(void)
 
         ShellExecute(NULL, "open", bat_filepath, NULL, NULL, SW_HIDE);
     }
+
+    return CBREW_TRUE;
+}
+
+#elif defined(CBREW_PLATFORM_LINUX)
+
+void cbrew_executable_filepath(char* filepath, const char* argv0)
+{
+    CBREW_ASSERT(filepath != NULL);
+    CBREW_ASSERT(argv0 != NULL);
+
+    strcpy(filepath, argv0);
+}
+
+CbrewBool cbrew_first_file_is_older(const char* first_file, const char* second_file)
+{
+    CBREW_ASSERT(first_file != NULL);
+    CBREW_ASSERT(second_file != NULL);
+
+    struct stat first_stat;
+    struct stat second_stat;
+
+    if (stat(first_file, &first_stat) != 0 || S_ISDIR(first_stat.st_mode))
+        return CBREW_FALSE;
+
+    if (stat(second_file, &second_stat) != 0 || S_ISDIR(second_stat.st_mode))
+        return CBREW_FALSE;
+
+    return second_stat.st_mtime > first_stat.st_mtime;
+}
+
+CbrewBool cbrew_file_rename(const char* old_name, const char* new_name)
+{
+    CBREW_ASSERT(old_name != NULL);
+    CBREW_ASSERT(new_name != NULL);
+
+    return rename(old_name, new_name) == 0;
+}
+
+char** cbrew_find_files(const char* dir, size_t* files_count)
+{
+    CBREW_ASSERT(dir != NULL);
+
+    char** files = NULL;
+    size_t files_found = 0;
+
+    DIR* d = opendir(dir);
+    if (d)
+    {
+        struct dirent* de;
+        while ((de = readdir(d)) != NULL)
+        {
+            if (de->d_type != DT_DIR && strcmp(de->d_name, ".") != 0 && strcmp(de->d_name, "..") != 0)
+            {
+                ++files_found;
+                files = realloc(files, files_found * sizeof(char*));
+
+                files[files_found - 1] = malloc((strlen(dir) + 1 + strlen(de->d_name) + 1) * sizeof(char));
+                sprintf(files[files_found - 1], "%s/%s", dir, de->d_name);
+            }
+        }
+
+        closedir(d);
+    }
+
+    if (files_count != NULL)
+        *files_count = files_found;
+
+    return files;
+}
+
+char** cbrew_find_files_recursive(const char* dir, size_t* files_count)
+{
+    CBREW_ASSERT(dir != NULL);
+
+    char** files = NULL;
+    size_t files_found = 0;
+
+    DIR* d = opendir(dir);
+    if (d)
+    {
+        struct dirent* de;
+        while ((de = readdir(d)) != NULL)
+        {
+            if (strcmp(de->d_name, ".") != 0 && strcmp(de->d_name, "..") != 0)
+            {
+                char path[CBREW_FILEPATH_MAX];
+                sprintf(path, "%s/%s", dir, de->d_name);
+
+                struct stat sb;
+                if (stat(path, &sb) == 0)
+                {
+                    if (S_ISDIR(sb.st_mode))
+                    {
+                        size_t sub_files_count = 0;
+                        char** sub_files = cbrew_find_files_recursive(path, &sub_files_count);
+
+                        files = realloc(files, (files_found + sub_files_count) * sizeof(char*));
+
+                        for(size_t i = 0; i < sub_files_count; ++i)
+                            files[files_found + i] = sub_files[i];
+
+                        files_found += sub_files_count;
+
+                        free(sub_files);
+                    }
+                    else
+                    {
+                        ++files_found;
+                        files = realloc(files, files_found * sizeof(char*));
+
+                        files[files_found - 1] = malloc((strlen(path) + 1) * sizeof(char));
+                        strcpy(files[files_found - 1], path);
+                    }
+                }
+            }
+        }
+
+        closedir(d);
+    }
+
+    if (files_count != NULL)
+        *files_count = files_found;
+
+    return files;
+}
+
+CbrewBool cbrew_dir_exists(const char* dir)
+{
+    CBREW_ASSERT(dir != NULL);
+
+    struct stat sb;
+
+    return stat(dir, &sb) == 0 && S_ISDIR(sb.st_mode);
+}
+
+CbrewBool cbrew_dir_create(const char* dir)
+{
+    CBREW_ASSERT(dir != NULL);
+    
+    char dir_path[CBREW_FILEPATH_MAX];
+    for(size_t i = 0; i < strlen(dir); ++i)
+    {
+        if(dir[i] != CBREW_PATH_SEPARATOR)
+            continue;
+        
+        strncpy(dir_path, dir, i);
+        dir_path[i] = '\0';
+
+        if(mkdir(dir_path, 0755) != 0 && errno != EEXIST)
+            return CBREW_FALSE;
+    }
+
+    if(mkdir(dir, 0755) == 0)
+        return CBREW_TRUE;
+
+    return errno == EEXIST;
+}
+
+CbrewBool cbrew_self_destruct(void)
+{
+    return unlink(CBREW_OLD_NAME) == 0;
 }
 
 #else

@@ -6,7 +6,7 @@
 void create_lunox_core(void)
 {
     CbrewProject* project = CBREW_PRJ_NEW("Lunox-Core", CBREW_PROJECT_TYPE_STATIC_LIB);
-    CBREW_PRJ_FILES(project, "lunox/**.c");
+    CBREW_PRJ_FILES(project, "./lunox/**.c");
     CBREW_PRJ_INCLUDE_DIR(project, "lunox/src");
     CBREW_PRJ_FLAG(project, "-Wall");
     CBREW_PRJ_FLAG(project, "-Wextra");
@@ -35,7 +35,7 @@ void create_lunox_core(void)
 void create_lunox_engine(void)
 {
     CbrewProject* project = CBREW_PRJ_NEW("Lunox", CBREW_PROJECT_TYPE_APP);
-    CBREW_PRJ_FILES(project, "engine/**.c");
+    CBREW_PRJ_FILES(project, "./engine/**.c");
     CBREW_PRJ_INCLUDE_DIR(project, "lunox/src");
     CBREW_PRJ_INCLUDE_DIR(project, "engine/src");
     CBREW_PRJ_LINK(project, "bin/Lunox-Core-Debug/Lunox-Core");
@@ -66,7 +66,7 @@ int main(int argc, char** argv)
     create_lunox_core();
     create_lunox_engine();
 
-    cbrew_build();
+    cbrew_build(argc, argv);
 
     return EXIT_SUCCESS;
 }
