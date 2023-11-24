@@ -1,7 +1,7 @@
 #ifndef LNX_MOVE_LIST_H
 #define LNX_MOVE_LIST_H
 
-#include "lunox/move/Move.h"
+#include "lunox/move/move.h"
 
 #define LNX_MOVE_LIST_CAPACITY 256
 
