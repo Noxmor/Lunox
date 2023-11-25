@@ -13,20 +13,20 @@ void create_lunox_core(void)
     CBREW_PRJ_FLAG(project, "-Wunreachable-code");
 
 
-    CbrewConfig* debug = CBREW_CFG_NEW(project, "Debug", "bin/Lunox-Core-Debug", "bin-int/Lunox-Core-Debug");
+    CbrewConfig* debug = CBREW_CFG_NEW(project, "Debug", "bin/Lunox-Core-Debug-" CBREW_PLATFORM_NAME, "bin-int/Lunox-Core-Debug-" CBREW_PLATFORM_NAME);
     CBREW_CFG_DEFINE(debug, "LNX_DEBUG");
     CBREW_CFG_DEFINE(debug, "LNX_ENABLE_ASSERTS");
     CBREW_CFG_DEFINE(debug, "LNX_ENABLE_VERIFY");
     CBREW_CFG_FLAG(debug, "-g");
     CBREW_CFG_FLAG(debug, "-O0");
 
-    CbrewConfig* release = CBREW_CFG_NEW(project, "Release", "bin/Lunox-Core-Release", "bin-int/Lunox-Core-Release");
+    CbrewConfig* release = CBREW_CFG_NEW(project, "Release", "bin/Lunox-Core-Release-" CBREW_PLATFORM_NAME, "bin-int/Lunox-Core-Release-" CBREW_PLATFORM_NAME);
     CBREW_CFG_DEFINE(release, "LNX_RELEASE");
     CBREW_CFG_DEFINE(release, "LNX_ENABLE_VERIFY");
     CBREW_CFG_FLAG(release, "-g");
     CBREW_CFG_FLAG(release, "-O2");
 
-    CbrewConfig* dist = CBREW_CFG_NEW(project, "Dist", "bin/Lunox-Core-Dist", "bin-int/Lunox-Core-Dist");
+    CbrewConfig* dist = CBREW_CFG_NEW(project, "Dist", "bin/Lunox-Core-Dist-" CBREW_PLATFORM_NAME, "bin-int/Lunox-Core-Dist-" CBREW_PLATFORM_NAME);
     CBREW_CFG_DEFINE(dist, "LNX_DIST");
     CBREW_CFG_FLAG(dist, "-O3");
 
@@ -44,17 +44,17 @@ void create_lunox_engine(void)
     CBREW_PRJ_FLAG(project, "-Wunreachable-code");
 
 
-    CbrewConfig* debug = CBREW_CFG_NEW(project, "Debug", "bin/Lunox-Debug", "bin-int/Lunox-Debug");
+    CbrewConfig* debug = CBREW_CFG_NEW(project, "Debug", "bin/Lunox-Debug-" CBREW_PLATFORM_NAME, "bin-int/Lunox-Debug-" CBREW_PLATFORM_NAME);
     CBREW_CFG_DEFINE(debug, "LNX_DEBUG");
     CBREW_CFG_FLAG(debug, "-g");
     CBREW_CFG_FLAG(debug, "-O0");
 
-    CbrewConfig* release = CBREW_CFG_NEW(project, "Release", "bin/Lunox-Release", "bin-int/Lunox-Release");
+    CbrewConfig* release = CBREW_CFG_NEW(project, "Release", "bin/Lunox-Release-" CBREW_PLATFORM_NAME, "bin-int/Lunox-Release-" CBREW_PLATFORM_NAME);
     CBREW_CFG_DEFINE(release, "LNX_RELEASE");
     CBREW_CFG_FLAG(release, "-g");
     CBREW_CFG_FLAG(release, "-O2");
 
-    CbrewConfig* dist = CBREW_CFG_NEW(project, "Dist", "bin/Lunox-Dist", "bin-int/Lunox-Dist");
+    CbrewConfig* dist = CBREW_CFG_NEW(project, "Dist", "bin/Lunox-Dist-" CBREW_PLATFORM_NAME, "bin-int/Lunox-Dist-" CBREW_PLATFORM_NAME);
     CBREW_CFG_DEFINE(dist, "LNX_DIST");
     CBREW_CFG_FLAG(dist, "-O3");
 }
