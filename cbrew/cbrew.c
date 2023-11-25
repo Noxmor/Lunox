@@ -38,7 +38,7 @@ void create_lunox_engine(void)
     CBREW_PRJ_FILES(project, "./engine/**.c");
     CBREW_PRJ_INCLUDE_DIR(project, "lunox/src");
     CBREW_PRJ_INCLUDE_DIR(project, "engine/src");
-    CBREW_PRJ_LINK(project, "bin/Lunox-Core-Debug/Lunox-Core");
+    CBREW_PRJ_LINK(project, "bin/Lunox-Core-Debug-" CBREW_PLATFORM_NAME "/Lunox-Core");
     CBREW_PRJ_FLAG(project, "-Wall");
     CBREW_PRJ_FLAG(project, "-Wextra");
     CBREW_PRJ_FLAG(project, "-Wunreachable-code");
