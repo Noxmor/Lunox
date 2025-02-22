@@ -3,5 +3,4 @@ bin/
 bin-int/
 
 # cbrew
-cbrew**
-!cbrew/
+.cbrew/

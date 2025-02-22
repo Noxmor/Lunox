@@ -1,7 +1,7 @@
 #define CBREW_ENABLE_ASSERTS
 #define CBREW_ENABLE_CONSOLE_COLORS
 #define CBREW_IMPLEMENTATION
-#include "cbrew.h"
+#include <cbrew/cbrew.h>
 
 void create_lunox_core(void)
 {
@@ -59,14 +59,12 @@ void create_lunox_engine(void)
     CBREW_CFG_FLAG(dist, "-O3");
 }
 
-int main(int argc, char** argv)
+int main(void)
 {
-    CBREW_AUTO_REBUILD(argc, argv);
-
     create_lunox_core();
     create_lunox_engine();
 
-    cbrew_build(argc, argv);
+    cbrew_build();
 
     return EXIT_SUCCESS;
 }
